@@ -1,0 +1,93 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { MapPinIcon, SearchIcon } from "@/components/icons";
+
+const CITIES = [
+  "London",
+  "Manchester",
+  "Birmingham",
+  "Edinburgh",
+  "New York",
+  "San Francisco",
+  "Berlin",
+  "Paris",
+  "Dubai",
+  "Tashkent",
+];
+
+/** Hero search: the primary CTA on a discovery marketplace. */
+export function SearchBar({
+  defaultQuery = "",
+  defaultCity = "London",
+  size = "lg",
+}: {
+  defaultQuery?: string;
+  defaultCity?: string;
+  size?: "lg" | "sm";
+}) {
+  const [query, setQuery] = useState(defaultQuery);
+  const [city, setCity] = useState(defaultCity);
+  const router = useRouter();
+
+  function submit(formEvent: React.FormEvent) {
+    formEvent.preventDefault();
+    const params = new URLSearchParams();
+    if (query.trim()) params.set("q", query.trim());
+    if (city) params.set("city", city);
+    router.push(`/discover?${params.toString()}`);
+  }
+
+  const height = size === "lg" ? "h-14" : "h-12";
+
+  return (
+    <form
+      onSubmit={submit}
+      role="search"
+      className="surface flex w-full flex-col gap-2 rounded-2xl p-2 sm:flex-row sm:items-center"
+    >
+      <div className="relative flex-1">
+        <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-mist-500" />
+        <label htmlFor="search-query" className="sr-only">
+          What are you into?
+        </label>
+        <input
+          id="search-query"
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Spider-Man, hackathons, techno, networking…"
+          className={`${height} w-full rounded-xl bg-transparent pl-12 pr-4 text-base text-mist-100 placeholder:text-mist-500 focus:outline-none`}
+        />
+      </div>
+
+      <div className="relative sm:w-48">
+        <MapPinIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-mist-500" />
+        <label htmlFor="search-city" className="sr-only">
+          City
+        </label>
+        <select
+          id="search-city"
+          value={city}
+          onChange={(event) => setCity(event.target.value)}
+          className={`${height} w-full cursor-pointer appearance-none rounded-xl bg-ink-800 pl-12 pr-4 text-sm text-mist-200 transition-colors duration-200 hover:bg-ink-700 focus:outline-none`}
+        >
+          {CITIES.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <button
+        type="submit"
+        className={`${height} cursor-pointer rounded-xl bg-amber-400 px-7 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-amber-300`}
+      >
+        Search
+      </button>
+    </form>
+  );
+}

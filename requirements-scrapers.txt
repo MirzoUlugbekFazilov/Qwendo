@@ -1,0 +1,10 @@
+# Optional: browser automation used only as a fallback when a source stops
+# serving its data in the initial HTML response.
+#
+#   pip install -r requirements-scrapers.txt
+#   python -m playwright install chromium
+#
+# Not needed by the API, and deliberately excluded from requirements.txt so
+# serverless API deployments stay small.
+-r requirements.txt
+playwright==1.49.1

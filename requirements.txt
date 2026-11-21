@@ -1,0 +1,13 @@
+# Qwendo API + workers — runtime dependencies.
+# Kept slim so serverless deploys stay well under the bundle size limit.
+# Playwright (browser fallback for JS-rendered sources) lives in
+# requirements-scrapers.txt and is optional: core.links/workers import it lazily.
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+httpx==0.28.1
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+python-dateutil==2.9.0.post0
+selectolax==0.3.27
+tenacity==9.0.0
