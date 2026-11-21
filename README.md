@@ -239,6 +239,28 @@ curl -X POST localhost:8000/v1/recommendations/preview \
 
 ---
 
+## Curating the landing-page hero
+
+The hero shows real event artwork from the live catalogue. Scraped artwork
+varies in quality, so any event can be vetoed from the hero without removing it
+from the product:
+
+```sql
+-- hide from the hero only (still searchable and recommendable)
+update public.events set hero_eligible = false where id = '<event-id>';
+
+-- see what's currently hidden
+select title, source from public.events where not hero_eligible;
+
+-- put one back
+update public.events set hero_eligible = true where id = '<event-id>';
+```
+
+Eligible events are served by `GET /v1/events/hero`, ordered by popularity —
+which also tends to surface the best-produced artwork, since larger promoters
+ship proper key art. The frontend then picks one event per category so the hero
+shows the breadth of the catalogue rather than three of the same thing.
+
 ## Authentication
 
 Email + password and **Sign in with Google**, both through Supabase Auth. The app code

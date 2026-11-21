@@ -53,10 +53,11 @@ const STEPS = [
 ];
 
 export default async function HomePage() {
-  const [interests, trending, stats] = await Promise.all([
+  const [interests, trending, heroEvents, stats] = await Promise.all([
     safe(api.interests(), []),
-    // Extra rows feed the hero collage; the grid below shows the first six.
-    safe(api.trending("London", 16), EMPTY_LIST),
+    safe(api.trending("London", 6), EMPTY_LIST),
+    // Curated separately: only artwork nobody has vetoed reaches the hero.
+    safe(api.heroEvents("London", 14), EMPTY_LIST),
     safe(api.stats(), { events: 0, sources: 0, cities: 0, interests: 0, last_updated: null }),
   ]);
 
@@ -73,7 +74,7 @@ export default async function HomePage() {
     <>
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section className="aurora grain relative overflow-hidden border-b border-ink-850">
-        <HeroCollage events={trending.items} />
+        <HeroCollage events={heroEvents.items} />
 
         <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
           <Link
@@ -251,7 +252,7 @@ export default async function HomePage() {
               <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
           </div>
-          <EventGrid events={trending.items.slice(0, 6)} showReason={false} />
+          <EventGrid events={trending.items} showReason={false} />
         </section>
       )}
 

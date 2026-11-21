@@ -128,6 +128,11 @@ export const api = {
   events: (query: EventQuery = {}) =>
     request<EventList>(`/v1/events${toSearchParams(query)}`, { revalidate: 120 }),
 
+  heroEvents: (city?: string, limit = 12) =>
+    request<EventList>(`/v1/events/hero${toSearchParams({ city, limit })}`, {
+      revalidate: 300,
+    }),
+
   trending: (city?: string, limit = 12) =>
     request<EventList>(`/v1/events/trending${toSearchParams({ city, limit })}`, {
       revalidate: 300,

@@ -101,6 +101,27 @@ async def list_events(
     )
 
 
+@router.get("/events/hero", response_model=EventListOut)
+async def hero(
+    db: Db,
+    city: Annotated[str | None, Query(max_length=120)] = None,
+    limit: Annotated[int, Query(ge=1, le=40)] = 12,
+) -> EventListOut:
+    """Events shown in the landing-page hero.
+
+    Only events with artwork that a human hasn't vetoed. Hide one with:
+        update events set hero_eligible = false where id = '…';
+    """
+    rows = await db.rpc("hero_events", {"p_city": city, "p_limit": limit}) or []
+    return EventListOut(
+        items=[EventOut.model_validate(row) for row in rows],
+        count=len(rows),
+        limit=limit,
+        offset=0,
+        fallback="hero",
+    )
+
+
 @router.get("/events/trending", response_model=EventListOut)
 async def trending(
     db: Db,
