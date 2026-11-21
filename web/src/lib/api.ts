@@ -9,7 +9,19 @@ type RequestOptions = {
   /** Seconds to cache. Omit for personalised responses. */
   revalidate?: number;
   signal?: AbortSignal;
+  /** Milliseconds before giving up. */
+  timeoutMs?: number;
 };
+
+/**
+ * A server render must never wait on the API indefinitely.
+ *
+ * The backend is a serverless Python function, so the first request after it
+ * scales to zero can take many seconds. Without a deadline that cold start
+ * becomes a blank, frozen page; with one, the page renders its empty state and
+ * the user can still navigate.
+ */
+const DEFAULT_TIMEOUT_MS = 8000;
 
 export class ApiError extends Error {
   constructor(
@@ -22,11 +34,18 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { token, method = "GET", body, revalidate, signal } = options;
+  const {
+    token,
+    method = "GET",
+    body,
+    revalidate,
+    signal,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+  } = options;
 
   const response = await fetch(`${API_URL}${path}`, {
     method,
-    signal,
+    signal: signal ?? AbortSignal.timeout(timeoutMs),
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -55,9 +74,13 @@ export async function safe<T>(promise: Promise<T>, fallback: T): Promise<T> {
   try {
     return await promise;
   } catch (error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[qwendo] API request failed:", (error as Error).message);
-    }
+    const reason =
+      (error as Error).name === "TimeoutError"
+        ? `timed out after ${DEFAULT_TIMEOUT_MS}ms (cold start?)`
+        : (error as Error).message;
+    // Logged on the server in every environment: a silently empty feed is the
+    // hardest kind of outage to notice.
+    console.warn("[qwendo] API request failed:", reason);
     return fallback;
   }
 }
@@ -118,7 +141,14 @@ export const api = {
     interest_text?: string;
     city?: string;
     limit?: number;
-  }) => request<EventList>("/v1/recommendations/preview", { method: "POST", body }),
+  }) =>
+    // Runs in the browser behind its own loading state, so it can afford to
+    // wait out a cold start rather than failing the user's explicit action.
+    request<EventList>("/v1/recommendations/preview", {
+      method: "POST",
+      body,
+      timeoutMs: 25_000,
+    }),
 
   me: (token: string) => request<Me>("/v1/me", { token }),
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
 from typing import Annotated, Any
 
@@ -76,26 +77,37 @@ async def recommendations(
     offset: Annotated[int, Query(ge=0, le=5000)] = 0,
 ) -> EventListOut:
     """Ranked feed for the signed-in user, built from their taste vector."""
-    profile = await get_profile(db, user)
+    # Profile and interest slugs are independent lookups against a database in
+    # another region — issue them together rather than paying the round trip twice.
+    profile, picked = await asyncio.gather(
+        get_profile(db, user),
+        db.select(
+            "user_interests", columns="interest_slug", filters={"user_id": f"eq.{user['id']}"}
+        ),
+    )
     embedding = profile.get("embedding")
 
-    rows = await _match(
-        db,
-        embedding=embedding,
-        user_id=user["id"],
-        city=city or profile.get("city"),
-        lat=profile.get("lat"),
-        lng=profile.get("lng"),
-        radius_km=radius_km or profile.get("radius_km"),
-        include_online=profile.get("include_online", True),
-        categories=categories,
-        sources=sources,
-        starts_after=starts_after,
-        starts_before=starts_before,
-        free_only=free_only,
-        max_price=max_price,
-        limit=limit,
-        offset=offset,
+    # The ranking query and the interest-label lookup are likewise independent.
+    rows, user_categories = await asyncio.gather(
+        _match(
+            db,
+            embedding=embedding,
+            user_id=user["id"],
+            city=city or profile.get("city"),
+            lat=profile.get("lat"),
+            lng=profile.get("lng"),
+            radius_km=radius_km or profile.get("radius_km"),
+            include_online=profile.get("include_online", True),
+            categories=categories,
+            sources=sources,
+            starts_after=starts_after,
+            starts_before=starts_before,
+            free_only=free_only,
+            max_price=max_price,
+            limit=limit,
+            offset=offset,
+        ),
+        categories_for_interests(db, [row["interest_slug"] for row in (picked or [])]),
     )
 
     fallback = None if embedding else "no-taste-vector"
@@ -111,13 +123,6 @@ async def recommendations(
             offset=offset,
         )
         fallback = fallback or "widened-location"
-
-    picked = await db.select(
-        "user_interests", columns="interest_slug", filters={"user_id": f"eq.{user['id']}"}
-    )
-    user_categories = await categories_for_interests(
-        db, [row["interest_slug"] for row in (picked or [])]
-    )
 
     return EventListOut(
         items=[EventOut.model_validate(row) for row in with_reasons(rows, user_categories)],
