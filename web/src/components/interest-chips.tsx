@@ -39,10 +39,10 @@ export function InterestChips({
                   onClick={() => onToggle(interest.slug)}
                   disabled={atLimit}
                   aria-pressed={isSelected}
-                  className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${
+                  className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-pill border px-3.5 py-2 text-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${
                     isSelected
-                      ? "border-amber-400 bg-amber-400/12 text-amber-300"
-                      : "border-ink-700 bg-ink-850 text-mist-300 hover:border-ink-600 hover:text-mist-100"
+                      ? "border-iris-400/70 bg-iris-500/15 text-iris-200 shadow-[0_6px_20px_-12px_rgb(139_92_246/0.9)]"
+                      : "border-ink-700 bg-ink-850 text-mist-300 hover:border-ink-500 hover:bg-ink-800 hover:text-mist-100"
                   }`}
                 >
                   {isSelected && <CheckIcon className="h-3.5 w-3.5" />}

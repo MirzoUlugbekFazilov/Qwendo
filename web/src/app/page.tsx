@@ -51,6 +51,13 @@ const STEPS = [
   },
 ];
 
+const FACTS = [
+  { value: "3", label: "marketplaces watched" },
+  { value: "53", label: "interests to match on" },
+  { value: "6h", label: "refresh cycle" },
+  { value: "0", label: "booking fees — we don't sell tickets" },
+];
+
 export default async function HomePage() {
   const [interests, trending] = await Promise.all([
     safe(api.interests(), []),
@@ -60,17 +67,16 @@ export default async function HomePage() {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="aurora relative overflow-hidden border-b border-ink-850">
+      <section className="aurora grain relative overflow-hidden border-b border-ink-850">
         <div className="mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
-          <span className="inline-flex items-center gap-2 rounded-full border border-ink-700 bg-ink-900/70 px-4 py-1.5 text-xs font-medium text-mist-300 backdrop-blur">
-            <SparklesIcon className="h-3.5 w-3.5 text-amber-400" />
+          <span className="animate-fade inline-flex items-center gap-2 rounded-pill border border-iris-500/30 bg-iris-500/10 px-4 py-1.5 text-xs font-semibold text-iris-200 backdrop-blur">
+            <SparklesIcon className="h-3.5 w-3.5" />
             AI event discovery across every marketplace
           </span>
 
-          <h1 className="mt-7 font-display text-4xl font-bold leading-[1.08] sm:text-6xl">
-            <span className="text-mist-100">Never miss the event</span>
-            <br />
-            <span className="text-gradient">you actually care about</span>
+          <h1 className="mt-7 font-display text-[2.5rem] font-extrabold leading-[1.05] sm:text-6xl lg:text-[4.25rem]">
+            <span className="block text-mist-100">Never miss the event</span>
+            <span className="text-gradient block">you actually care about</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-mist-400">
@@ -88,19 +94,38 @@ export default async function HomePage() {
               <Link
                 key={term}
                 href={`/discover?q=${encodeURIComponent(term)}&city=London`}
-                className="cursor-pointer rounded-full border border-ink-800 px-3 py-1 text-mist-300 transition-colors duration-200 hover:border-amber-400/60 hover:text-amber-300"
+                className="cursor-pointer rounded-pill border border-ink-800 px-3 py-1 text-mist-300 transition-colors duration-200 hover:border-iris-400/60 hover:bg-iris-500/10 hover:text-iris-200"
               >
                 {term}
               </Link>
             ))}
           </div>
         </div>
+
+        {/* Facts strip grounds the promise in specifics. */}
+        <div className="border-t border-ink-850/70">
+          <dl className="mx-auto grid max-w-5xl grid-cols-2 gap-px bg-ink-850/70 sm:grid-cols-4">
+            {FACTS.map((fact) => (
+              <div key={fact.label} className="bg-ink-950/60 px-4 py-6 text-center">
+                <dt className="sr-only">{fact.label}</dt>
+                <dd>
+                  <span className="font-display text-2xl font-extrabold text-mist-100">
+                    {fact.value}
+                  </span>
+                  <span className="mt-1 block text-xs leading-snug text-mist-500">
+                    {fact.label}
+                  </span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </section>
 
       {/* ── Problem ──────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
-          <h2 className="font-display text-3xl font-bold text-mist-100 sm:text-4xl">
+          <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
             The event was perfect. You just found out too late.
           </h2>
           <p className="mt-4 text-mist-400">
@@ -109,13 +134,17 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {PROBLEMS.map(({ icon: Icon, title, body }) => (
-            <div key={title} className="surface surface-hover rounded-card p-6">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-ink-800 text-amber-400">
+        <div className="stagger mt-10 grid gap-5 md:grid-cols-3">
+          {PROBLEMS.map(({ icon: Icon, title, body }, index) => (
+            <div
+              key={title}
+              style={{ "--i": index } as React.CSSProperties}
+              className="surface surface-hover gradient-ring rounded-card p-6"
+            >
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-iris-500/25 to-moss-500/20 text-iris-200 ring-1 ring-iris-500/20">
                 <Icon className="h-5 w-5" />
               </span>
-              <h3 className="mt-4 font-display text-lg font-semibold text-mist-100">{title}</h3>
+              <h3 className="mt-4 font-display text-lg font-bold text-mist-100">{title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-mist-400">{body}</p>
             </div>
           ))}
@@ -123,11 +152,11 @@ export default async function HomePage() {
       </section>
 
       {/* ── Live demo ────────────────────────────────────────── */}
-      <section className="border-y border-ink-850 bg-ink-900/40">
+      <section className="relative border-y border-ink-850 bg-ink-900/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="mb-10 max-w-2xl">
-            <h2 className="font-display text-3xl font-bold text-mist-100 sm:text-4xl">
-              Try it right now. No account.
+            <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
+              Try it right now. <span className="text-iris-300">No account.</span>
             </h2>
             <p className="mt-4 text-mist-400">
               Pick a few interests and watch the feed rebuild itself against what&apos;s actually
@@ -140,17 +169,29 @@ export default async function HomePage() {
 
       {/* ── How it works ─────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <h2 className="font-display text-3xl font-bold text-mist-100 sm:text-4xl">How it works</h2>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {STEPS.map((step) => (
-            <div key={step.number} className="surface rounded-card p-6">
-              <span className="font-display text-sm font-bold tracking-[0.2em] text-amber-400">
+        <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
+          How it works
+        </h2>
+        <div className="stagger mt-10 grid gap-5 md:grid-cols-3">
+          {STEPS.map((step, index) => (
+            <div
+              key={step.number}
+              style={{ "--i": index } as React.CSSProperties}
+              className="surface relative overflow-hidden rounded-card p-6"
+            >
+              <span
+                className="absolute right-4 top-2 font-display text-6xl font-extrabold text-ink-800/70"
+                aria-hidden="true"
+              >
                 {step.number}
               </span>
-              <h3 className="mt-3 font-display text-lg font-semibold text-mist-100">
+              <span className="relative font-display text-xs font-bold tracking-[0.22em] text-moss-300">
+                STEP {step.number}
+              </span>
+              <h3 className="relative mt-3 font-display text-lg font-bold text-mist-100">
                 {step.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-mist-400">{step.body}</p>
+              <p className="relative mt-2 text-sm leading-relaxed text-mist-400">{step.body}</p>
             </div>
           ))}
         </div>
@@ -158,13 +199,15 @@ export default async function HomePage() {
 
       {/* ── Categories ───────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <h2 className="font-display text-2xl font-bold text-mist-100">Browse by what you like</h2>
+        <h2 className="font-display text-2xl font-extrabold text-mist-100">
+          Browse by what you like
+        </h2>
         <div className="mt-6 flex flex-wrap gap-2.5">
           {Object.entries(CATEGORY_LABELS).map(([slug, label]) => (
             <Link
               key={slug}
               href={`/discover?categories=${slug}&city=London`}
-              className="surface surface-hover cursor-pointer rounded-full px-4 py-2 text-sm text-mist-300"
+              className="surface cursor-pointer rounded-pill px-4 py-2 text-sm text-mist-300 transition-all duration-200 hover:border-iris-400/50 hover:bg-iris-500/10 hover:text-iris-200"
             >
               {label}
             </Link>
@@ -177,7 +220,7 @@ export default async function HomePage() {
         <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="font-display text-2xl font-bold text-mist-100">
+              <h2 className="font-display text-2xl font-extrabold text-mist-100">
                 Trending in London
               </h2>
               <p className="mt-1.5 text-sm text-mist-400">
@@ -186,10 +229,10 @@ export default async function HomePage() {
             </div>
             <Link
               href="/discover?city=London"
-              className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-amber-400 transition-colors duration-200 hover:text-amber-300"
+              className="group inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-moss-300 transition-colors duration-200 hover:text-moss-200"
             >
               See everything
-              <ArrowRightIcon className="h-4 w-4" />
+              <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
           </div>
           <EventGrid events={trending.items} showReason={false} />
@@ -198,22 +241,24 @@ export default async function HomePage() {
 
       {/* ── CTA ──────────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-        <div className="glow-amber surface relative overflow-hidden rounded-card px-6 py-16 text-center sm:px-12">
-          <div className="aurora absolute inset-0 -z-10" aria-hidden="true" />
-          <h2 className="font-display text-3xl font-bold text-mist-100 sm:text-4xl">
-            Your next favourite night is already on sale
+        <div className="aurora grain surface relative overflow-hidden rounded-card px-6 py-16 text-center sm:px-12">
+          <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
+            Your next favourite night is{" "}
+            <span className="text-gradient">already on sale</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-mist-400">
             Set your interests once. We&apos;ll keep watching every marketplace so you don&apos;t
             have to.
           </p>
-          <Link
-            href="/login?mode=signup"
-            className="mt-8 inline-flex h-12 cursor-pointer items-center gap-2 rounded-xl bg-amber-400 px-7 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-amber-300"
-          >
-            Create your feed — free
-            <ArrowRightIcon className="h-4 w-4" />
-          </Link>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/login?mode=signup" className="btn btn-primary h-12 px-7">
+              Create your feed — free
+              <ArrowRightIcon className="h-4 w-4" />
+            </Link>
+            <Link href="/discover" className="btn btn-ghost h-12 px-7">
+              Browse without an account
+            </Link>
+          </div>
         </div>
       </section>
     </>

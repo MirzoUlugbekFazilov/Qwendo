@@ -98,7 +98,7 @@ export function OnboardingForm({ interests, me }: { interests: Interest[]; me: M
               id="city"
               value={city}
               onChange={(event) => setCity(event.target.value)}
-              className="h-12 w-full cursor-pointer rounded-xl border border-ink-700 bg-ink-900 px-4 text-sm text-mist-100 transition-colors duration-200 focus:border-amber-400 focus:outline-none"
+              className="h-12 w-full cursor-pointer rounded-xl border border-ink-700 bg-ink-900 px-4 text-sm text-mist-100 transition-colors duration-200 focus:border-moss-400 focus:outline-none"
             >
               {CITIES.map((option) => (
                 <option key={option} value={option}>
@@ -110,7 +110,7 @@ export function OnboardingForm({ interests, me }: { interests: Interest[]; me: M
 
           <div className="space-y-2">
             <label htmlFor="radius" className="block text-sm font-medium text-mist-300">
-              Travel radius: <span className="text-amber-300">{radius} km</span>
+              Travel radius: <span className="text-moss-300">{radius} km</span>
             </label>
             <input
               id="radius"
@@ -120,7 +120,7 @@ export function OnboardingForm({ interests, me }: { interests: Interest[]; me: M
               step={5}
               value={radius}
               onChange={(event) => setRadius(Number(event.target.value))}
-              className="h-12 w-full cursor-pointer accent-amber-400"
+              className="h-12 w-full cursor-pointer accent-moss-400"
             />
           </div>
         </div>
@@ -142,7 +142,7 @@ export function OnboardingForm({ interests, me }: { interests: Interest[]; me: M
           rows={3}
           maxLength={2000}
           placeholder="Huge Spider-Man fan, into AI startups, trying to get into running this year…"
-          className="w-full rounded-xl border border-ink-700 bg-ink-900 p-4 text-sm text-mist-100 placeholder:text-mist-500 transition-colors duration-200 focus:border-amber-400 focus:outline-none"
+          className="w-full rounded-xl border border-ink-700 bg-ink-900 p-4 text-sm text-mist-100 placeholder:text-mist-500 transition-colors duration-200 focus:border-moss-400 focus:outline-none"
         />
       </section>
 
@@ -157,7 +157,7 @@ export function OnboardingForm({ interests, me }: { interests: Interest[]; me: M
           type="button"
           onClick={save}
           disabled={saving || selected.length === 0}
-          className="inline-flex h-12 cursor-pointer items-center gap-2 rounded-xl bg-amber-400 px-7 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn btn-primary h-12 px-7"
         >
           {saving ? "Saving…" : "Save and see my feed"}
           <ArrowRightIcon className="h-4 w-4" />

@@ -22,17 +22,17 @@ export function Footer() {
           </h2>
           <ul className="space-y-2 text-sm text-mist-400">
             <li>
-              <Link href="/discover" className="transition-colors duration-200 hover:text-amber-300">
+              <Link href="/discover" className="transition-colors duration-200 hover:text-moss-300">
                 Discover events
               </Link>
             </li>
             <li>
-              <Link href="/onboarding" className="transition-colors duration-200 hover:text-amber-300">
+              <Link href="/onboarding" className="transition-colors duration-200 hover:text-moss-300">
                 Set your interests
               </Link>
             </li>
             <li>
-              <Link href="/saved" className="transition-colors duration-200 hover:text-amber-300">
+              <Link href="/saved" className="transition-colors duration-200 hover:text-moss-300">
                 Saved events
               </Link>
             </li>

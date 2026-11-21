@@ -71,7 +71,7 @@ export function TastePreview({ interests, city = "London" }: { interests: Intere
             value={freeText}
             onChange={(event) => setFreeText(event.target.value)}
             placeholder="e.g. Spider-Man, Arctic Monkeys, Formula 1"
-            className="h-12 w-full rounded-xl border border-ink-700 bg-ink-900 px-4 text-sm text-mist-100 placeholder:text-mist-500 transition-colors duration-200 focus:border-amber-400 focus:outline-none"
+            className="h-12 w-full rounded-xl border border-ink-700 bg-ink-900 px-4 text-sm text-mist-100 placeholder:text-mist-500 transition-colors duration-200 focus:border-moss-400 focus:outline-none"
           />
         </div>
 
@@ -79,7 +79,7 @@ export function TastePreview({ interests, city = "London" }: { interests: Intere
           type="button"
           onClick={run}
           disabled={loading || selected.length === 0}
-          className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-400 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn btn-accent h-12 w-full"
         >
           <SparklesIcon className="h-4 w-4" />
           {loading ? "Matching events…" : "Show my matches"}
@@ -96,7 +96,7 @@ export function TastePreview({ interests, city = "London" }: { interests: Intere
         {results === null && !loading && (
           <div className="surface grid h-full min-h-72 place-items-center rounded-card p-8 text-center">
             <div className="space-y-2">
-              <SparklesIcon className="mx-auto h-8 w-8 text-amber-400" />
+              <SparklesIcon className="mx-auto h-8 w-8 text-iris-300" />
               <p className="font-display text-lg font-semibold text-mist-100">
                 Your matches appear here
               </p>
@@ -111,10 +111,10 @@ export function TastePreview({ interests, city = "London" }: { interests: Intere
           <div className="grid gap-5 sm:grid-cols-2">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="surface overflow-hidden rounded-card" aria-hidden="true">
-                <div className="aspect-[16/9] animate-pulse bg-ink-800" />
+                <div className="aspect-[16/9] skeleton" />
                 <div className="space-y-3 p-5">
-                  <div className="h-3 w-20 animate-pulse rounded bg-ink-800" />
-                  <div className="h-4 w-full animate-pulse rounded bg-ink-800" />
+                  <div className="h-3 w-20 skeleton rounded" />
+                  <div className="h-4 w-full skeleton rounded" />
                 </div>
               </div>
             ))}
@@ -137,7 +137,7 @@ export function TastePreview({ interests, city = "London" }: { interests: Intere
 
             <Link
               href="/login?mode=signup"
-              className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-amber-400 transition-colors duration-200 hover:text-amber-300"
+              className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-moss-400 transition-colors duration-200 hover:text-moss-300"
             >
               Create an account to get these weekly, before they sell out
               <ArrowRightIcon className="h-4 w-4" />

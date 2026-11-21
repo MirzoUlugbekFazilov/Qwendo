@@ -44,10 +44,7 @@ export function TicketLink({
       target="_blank"
       rel="noopener noreferrer nofollow"
       onClick={handleClick}
-      className={
-        className ||
-        "inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-400 px-6 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-amber-300"
-      }
+      className={className || "btn btn-primary h-11 px-6"}
     >
       {children ?? (
         <>

@@ -1,21 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 
 import "./globals.css";
 
-const dmSans = DM_Sans({
+// Display: geometric-humanist, reads premium at large sizes.
+const displaySans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-dm-sans",
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-display-sans",
   display: "swap",
 });
 
-const inter = Inter({
+// Body: Inter stays — unbeatable at small sizes and dense UI.
+const bodySans = Inter({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-body-sans",
   display: "swap",
 });
 
@@ -45,18 +47,18 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#07080a",
+  themeColor: "#0a0b0e",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${inter.variable}`}>
+    <html lang="en" className={`${displaySans.variable} ${bodySans.variable}`}>
       <body className="min-h-dvh antialiased">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-amber-400 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink-950"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-moss-400 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink-950"
         >
           Skip to content
         </a>

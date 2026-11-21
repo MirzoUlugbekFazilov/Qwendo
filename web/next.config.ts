@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // A stray package-lock.json in the user's home directory makes Next infer the
+  // wrong workspace root; pin it to this app.
+  outputFileTracingRoot: __dirname,
   images: {
     // Event artwork is hotlinked from the marketplaces we aggregate.
     remotePatterns: [

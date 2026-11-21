@@ -37,7 +37,7 @@ export default async function OnboardingPage() {
       {interests.length === 0 ? (
         <div className="surface rounded-card p-8 text-sm text-mist-400">
           The interest taxonomy couldn&apos;t be loaded — check that the API is running on{" "}
-          <code className="text-amber-300">{process.env.NEXT_PUBLIC_API_URL}</code>.
+          <code className="text-moss-300">{process.env.NEXT_PUBLIC_API_URL}</code>.
         </div>
       ) : (
         <OnboardingForm interests={interests} me={me} />

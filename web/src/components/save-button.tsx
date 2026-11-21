@@ -56,7 +56,11 @@ export function SaveButton({ eventId, initiallySaved = false, variant = "icon" }
         onClick={toggle}
         disabled={pending}
         aria-pressed={saved}
-        className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-ink-700 bg-ink-850 px-5 text-sm font-medium text-mist-200 transition-colors duration-200 hover:border-ink-600 hover:text-mist-100 disabled:opacity-60"
+        className={`btn h-11 px-5 ${
+          saved
+            ? "border border-iris-500/60 bg-iris-500/12 text-iris-200 hover:bg-iris-500/20"
+            : "btn-ghost"
+        }`}
       >
         <BookmarkIcon filled={saved} className="h-4 w-4" />
         {saved ? "Saved" : "Save for later"}
@@ -71,7 +75,11 @@ export function SaveButton({ eventId, initiallySaved = false, variant = "icon" }
       disabled={pending}
       aria-pressed={saved}
       aria-label={saved ? "Remove from saved" : "Save event"}
-      className="grid h-11 w-11 cursor-pointer place-items-center rounded-full border border-ink-700 bg-ink-950/80 text-mist-300 backdrop-blur transition-colors duration-200 hover:border-amber-400 hover:text-amber-400 disabled:opacity-60"
+      className={`grid h-11 w-11 cursor-pointer place-items-center rounded-full border backdrop-blur-sm transition-colors duration-200 disabled:opacity-60 ${
+        saved
+          ? "border-iris-400/70 bg-iris-500/20 text-iris-200"
+          : "border-ink-700 bg-ink-950/75 text-mist-300 hover:border-iris-400/70 hover:text-iris-200"
+      }`}
     >
       <BookmarkIcon filled={saved} className="h-4.5 w-4.5" />
     </button>

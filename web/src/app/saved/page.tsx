@@ -35,7 +35,7 @@ export default async function SavedPage() {
           action={
             <Link
               href="/discover"
-              className="inline-flex h-11 cursor-pointer items-center rounded-xl bg-amber-400 px-5 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-amber-300"
+              className="btn btn-primary h-11 px-5"
             >
               Find events
             </Link>

@@ -91,7 +91,7 @@ export default async function EventPage({ params }: Props) {
           />
         ) : (
           <div className="grid h-full w-full place-items-center">
-            <TicketIcon className="h-12 w-12 text-amber-400/70" />
+            <TicketIcon className="h-12 w-12 text-moss-400/70" />
           </div>
         )}
       </div>
@@ -108,7 +108,7 @@ export default async function EventPage({ params }: Props) {
                   {categoryLabel(category)}
                 </span>
               ))}
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 font-medium text-amber-300">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-moss-400/30 bg-moss-400/10 px-2.5 py-1 font-medium text-moss-300">
                 <ClockIcon className="h-3.5 w-3.5" />
                 {countdownLabel(event.starts_at)}
               </span>
@@ -140,7 +140,7 @@ export default async function EventPage({ params }: Props) {
                   <Link
                     key={tag}
                     href={`/discover?q=${encodeURIComponent(tag)}`}
-                    className="cursor-pointer rounded-full border border-ink-700 px-3 py-1 text-xs text-mist-400 transition-colors duration-200 hover:border-amber-400/50 hover:text-amber-300"
+                    className="cursor-pointer rounded-full border border-ink-700 px-3 py-1 text-xs text-mist-400 transition-colors duration-200 hover:border-moss-400/50 hover:text-moss-300"
                   >
                     {tag}
                   </Link>
@@ -155,7 +155,7 @@ export default async function EventPage({ params }: Props) {
           <div className="surface space-y-5 rounded-card p-6">
             <dl className="space-y-4 text-sm">
               <div className="flex gap-3">
-                <CalendarIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-amber-400" />
+                <CalendarIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-moss-400" />
                 <div>
                   <dt className="text-mist-500">Starts</dt>
                   <dd className="font-medium text-mist-100">
@@ -166,9 +166,9 @@ export default async function EventPage({ params }: Props) {
 
               <div className="flex gap-3">
                 {event.is_online ? (
-                  <GlobeIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-amber-400" />
+                  <GlobeIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-moss-400" />
                 ) : (
-                  <MapPinIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-amber-400" />
+                  <MapPinIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-moss-400" />
                 )}
                 <div>
                   <dt className="text-mist-500">{event.is_online ? "Format" : "Venue"}</dt>
@@ -180,7 +180,7 @@ export default async function EventPage({ params }: Props) {
               </div>
 
               <div className="flex gap-3">
-                <TicketIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-amber-400" />
+                <TicketIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-moss-400" />
                 <div>
                   <dt className="text-mist-500">Price</dt>
                   <dd className="font-medium text-mist-100">{formatPrice(event)}</dd>
@@ -193,7 +193,7 @@ export default async function EventPage({ params }: Props) {
                 eventId={event.id}
                 url={event.url}
                 source={sourceLabel}
-                className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-400 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-amber-300"
+                className="btn btn-primary h-12 w-full"
               />
               <div className="[&>button]:w-full">
                 <SaveButton eventId={event.id} initiallySaved={isSaved} variant="full" />
@@ -217,7 +217,7 @@ export default async function EventPage({ params }: Props) {
                 href={`https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lng}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-mist-400 transition-colors duration-200 hover:text-amber-300"
+                className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-mist-400 transition-colors duration-200 hover:text-moss-300"
               >
                 <MapPinIcon className="h-3.5 w-3.5" />
                 Open in Maps

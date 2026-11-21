@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="aurora grid min-h-[calc(100dvh-4rem)] place-items-center px-4 py-16">
+    <div className="aurora grain grid min-h-[calc(100dvh-4rem)] place-items-center px-4 py-16">
       <Suspense
         fallback={
-          <div className="surface h-96 w-full max-w-md animate-pulse rounded-card" aria-hidden="true" />
+          <div className="skeleton h-96 w-full max-w-md rounded-card" aria-hidden="true" />
         }
       >
         <LoginForm />

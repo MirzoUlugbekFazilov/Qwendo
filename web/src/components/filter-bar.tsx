@@ -48,10 +48,10 @@ export function FilterBar() {
               type="button"
               onClick={() => toggleCategory(slug)}
               aria-pressed={active}
-              className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-sm transition-colors duration-200 ${
+              className={`cursor-pointer rounded-pill border px-3.5 py-1.5 text-sm transition-all duration-200 ${
                 active
-                  ? "border-amber-400 bg-amber-400/12 text-amber-300"
-                  : "border-ink-700 bg-ink-850 text-mist-300 hover:border-ink-600 hover:text-mist-100"
+                  ? "border-iris-400/70 bg-iris-500/15 text-iris-200"
+                  : "border-ink-700 bg-ink-850 text-mist-300 hover:border-ink-500 hover:bg-ink-800 hover:text-mist-100"
               }`}
             >
               {label}
@@ -93,10 +93,10 @@ export function FilterBar() {
             })
           }
           aria-pressed={freeOnly}
-          className={`h-10 cursor-pointer rounded-lg border px-4 text-sm transition-colors duration-200 ${
+          className={`h-10 cursor-pointer rounded-lg border px-4 text-sm font-medium transition-colors duration-200 ${
             freeOnly
-              ? "border-amber-400 bg-amber-400/12 text-amber-300"
-              : "border-ink-700 bg-ink-850 text-mist-300 hover:border-ink-600 hover:text-mist-100"
+              ? "border-moss-400/70 bg-moss-400/15 text-moss-300"
+              : "border-ink-700 bg-ink-850 text-mist-300 hover:border-ink-500 hover:text-mist-100"
           }`}
         >
           Free only

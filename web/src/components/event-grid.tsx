@@ -36,7 +36,7 @@ export function EmptyState({
 }) {
   return (
     <div className="surface flex flex-col items-center gap-4 rounded-card px-6 py-16 text-center">
-      <span className="grid h-12 w-12 place-items-center rounded-full bg-ink-800 text-amber-400">
+      <span className="grid h-12 w-12 place-items-center rounded-full bg-ink-800 text-moss-400">
         <CompassIcon className="h-6 w-6" />
       </span>
       <div className="space-y-1.5">
@@ -53,11 +53,11 @@ export function EventGridSkeleton({ count = 6 }: { count?: number }) {
     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: count }).map((_, index) => (
         <div key={index} className="surface overflow-hidden rounded-card" aria-hidden="true">
-          <div className="aspect-[16/9] w-full animate-pulse bg-ink-800" />
+          <div className="aspect-[16/9] w-full skeleton" />
           <div className="space-y-3 p-5">
-            <div className="h-3 w-24 animate-pulse rounded bg-ink-800" />
-            <div className="h-4 w-full animate-pulse rounded bg-ink-800" />
-            <div className="h-4 w-2/3 animate-pulse rounded bg-ink-800" />
+            <div className="h-3 w-24 skeleton rounded" />
+            <div className="h-4 w-full skeleton rounded" />
+            <div className="h-4 w-2/3 skeleton rounded" />
           </div>
         </div>
       ))}

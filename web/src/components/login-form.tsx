@@ -130,7 +130,7 @@ export function LoginForm() {
               autoComplete="name"
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
-              className="h-12 w-full rounded-xl border border-ink-700 bg-ink-900 px-4 text-sm text-mist-100 transition-colors duration-200 focus:border-amber-400 focus:outline-none"
+              className="h-12 w-full rounded-xl border border-ink-700 bg-ink-900 px-4 text-sm text-mist-100 transition-colors duration-200 focus:border-moss-400 focus:outline-none"
             />
           </div>
         )}
@@ -146,7 +146,7 @@ export function LoginForm() {
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="h-12 w-full rounded-xl border border-ink-700 bg-ink-900 px-4 text-sm text-mist-100 transition-colors duration-200 focus:border-amber-400 focus:outline-none"
+            className="h-12 w-full rounded-xl border border-ink-700 bg-ink-900 px-4 text-sm text-mist-100 transition-colors duration-200 focus:border-moss-400 focus:outline-none"
           />
         </div>
 
@@ -162,7 +162,7 @@ export function LoginForm() {
             autoComplete={mode === "signup" ? "new-password" : "current-password"}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="h-12 w-full rounded-xl border border-ink-700 bg-ink-900 px-4 text-sm text-mist-100 transition-colors duration-200 focus:border-amber-400 focus:outline-none"
+            className="h-12 w-full rounded-xl border border-ink-700 bg-ink-900 px-4 text-sm text-mist-100 transition-colors duration-200 focus:border-moss-400 focus:outline-none"
           />
           {mode === "signup" && (
             <p className="text-xs text-mist-500">At least 8 characters.</p>
@@ -175,7 +175,7 @@ export function LoginForm() {
           </p>
         )}
         {status && (
-          <p role="status" className="rounded-lg bg-amber-400/10 px-3 py-2 text-sm text-amber-300">
+          <p role="status" className="rounded-lg bg-moss-400/10 px-3 py-2 text-sm text-moss-300">
             {status}
           </p>
         )}
@@ -183,7 +183,7 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-400 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+          className="btn btn-primary h-12 w-full"
         >
           {pending ? "Just a moment…" : mode === "signup" ? "Create account" : "Sign in"}
           <ArrowRightIcon className="h-4 w-4" />
@@ -199,7 +199,7 @@ export function LoginForm() {
             setError(null);
             setStatus(null);
           }}
-          className="cursor-pointer font-semibold text-amber-400 underline-offset-4 transition-colors duration-200 hover:text-amber-300 hover:underline"
+          className="cursor-pointer font-semibold text-moss-400 underline-offset-4 transition-colors duration-200 hover:text-moss-300 hover:underline"
         >
           {mode === "signup" ? "Sign in" : "Create one"}
         </button>

@@ -87,7 +87,7 @@ export default async function DiscoverPage({
         {personalize && !list.personalized && (
           <Link
             href="/onboarding"
-            className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-300 transition-colors duration-200 hover:bg-amber-400/15"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-iris-400/40 bg-iris-500/10 px-4 py-2 text-sm font-medium text-iris-200 transition-colors duration-200 hover:bg-iris-500/20"
           >
             <SparklesIcon className="h-4 w-4" />
             Add your interests to personalise this
@@ -106,7 +106,7 @@ export default async function DiscoverPage({
           action={
             <Link
               href="/discover"
-              className="inline-flex h-11 cursor-pointer items-center rounded-xl border border-ink-700 px-5 text-sm font-medium text-mist-200 transition-colors duration-200 hover:border-ink-600"
+              className="btn btn-ghost h-11 px-5"
             >
               Clear search
             </Link>

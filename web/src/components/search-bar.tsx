@@ -18,7 +18,7 @@ const CITIES = [
   "Tashkent",
 ];
 
-/** Hero search: the primary CTA on a discovery marketplace. */
+/** Hero search: on a discovery marketplace the search field *is* the primary CTA. */
 export function SearchBar({
   defaultQuery = "",
   defaultCity = "London",
@@ -46,7 +46,7 @@ export function SearchBar({
     <form
       onSubmit={submit}
       role="search"
-      className="surface flex w-full flex-col gap-2 rounded-2xl p-2 sm:flex-row sm:items-center"
+      className="gradient-ring glass flex w-full flex-col gap-2 rounded-2xl p-2 shadow-[0_24px_60px_-30px_rgb(0_0_0/0.9)] transition-shadow duration-300 focus-within:shadow-[0_24px_70px_-26px_rgb(124_58_237/0.45)] sm:flex-row sm:items-center"
     >
       <div className="relative flex-1">
         <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-mist-500" />
@@ -72,7 +72,7 @@ export function SearchBar({
           id="search-city"
           value={city}
           onChange={(event) => setCity(event.target.value)}
-          className={`${height} w-full cursor-pointer appearance-none rounded-xl bg-ink-800 pl-12 pr-4 text-sm text-mist-200 transition-colors duration-200 hover:bg-ink-700 focus:outline-none`}
+          className={`${height} w-full cursor-pointer appearance-none rounded-xl border border-ink-700 bg-ink-850 pl-12 pr-4 text-sm font-medium text-mist-200 transition-colors duration-200 hover:border-ink-500 focus:outline-none`}
         >
           {CITIES.map((option) => (
             <option key={option} value={option}>
@@ -82,10 +82,7 @@ export function SearchBar({
         </select>
       </div>
 
-      <button
-        type="submit"
-        className={`${height} cursor-pointer rounded-xl bg-amber-400 px-7 text-sm font-semibold text-ink-950 transition-colors duration-200 hover:bg-amber-300`}
-      >
+      <button type="submit" className={`btn btn-primary ${height} px-7 text-[0.9375rem]`}>
         Search
       </button>
     </form>
