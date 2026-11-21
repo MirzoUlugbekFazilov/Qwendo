@@ -35,32 +35,9 @@ const RIGHT_SLOTS: Slot[] = [
 
 const SLOTS = [...LEFT_SLOTS, ...RIGHT_SLOTS];
 
-/**
- * One event per category first, so the hero shows the breadth of the
- * catalogue instead of the same category three times.
- */
-function pickVaried(events: QwendoEvent[], count: number): QwendoEvent[] {
-  const withArtwork = events.filter((event) => event.image_url);
-  const seen = new Set<string>();
-  const varied: QwendoEvent[] = [];
-
-  for (const event of withArtwork) {
-    const category = event.categories?.[0] ?? "community";
-    if (seen.has(category)) continue;
-    seen.add(category);
-    varied.push(event);
-    if (varied.length === count) return varied;
-  }
-
-  for (const event of withArtwork) {
-    if (varied.length === count) break;
-    if (!varied.includes(event)) varied.push(event);
-  }
-  return varied;
-}
-
+/** Events are chosen by the page, so it knows which ones to keep out of the grid. */
 export function HeroCollage({ events }: { events: QwendoEvent[] }) {
-  const cards = pickVaried(events, SLOTS.length);
+  const cards = events.slice(0, SLOTS.length);
   if (cards.length < 4) return null;
 
   return (

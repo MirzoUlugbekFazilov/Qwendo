@@ -12,6 +12,7 @@ import {
 import { SearchBar } from "@/components/search-bar";
 import { TastePreview } from "@/components/taste-preview";
 import { EMPTY_LIST, api, safe } from "@/lib/api";
+import { HERO_CARD_COUNT, pickVariedEvents } from "@/lib/featured";
 import { CATEGORY_LABELS } from "@/lib/format";
 
 export const revalidate = 300;
@@ -55,16 +56,22 @@ const STEPS = [
 export default async function HomePage() {
   const [interests, trending, heroEvents, stats] = await Promise.all([
     safe(api.interests(), []),
-    // Over-fetch: the hero claims some of these, and showing the same event
+    // Over-fetch: the hero claims six of these, and showing the same event
     // twice on one page makes the catalogue look thinner than it is.
-    safe(api.trending("London", 18), EMPTY_LIST),
+    safe(api.trending("London", 30), EMPTY_LIST),
     // Curated separately: only artwork nobody has vetoed reaches the hero.
-    safe(api.heroEvents("London", 14), EMPTY_LIST),
+    safe(api.heroEvents("London", 24), EMPTY_LIST),
     safe(api.stats(), { events: 0, sources: 0, cities: 0, interests: 0, last_updated: null }),
   ]);
 
-  const heroIds = new Set(heroEvents.items.map((event) => event.id));
-  const trendingItems = trending.items.filter((event) => !heroIds.has(event.id)).slice(0, 6);
+  // Resolve the hero's actual six first, so only those are withheld from the
+  // grid — excluding every candidate would starve it.
+  const heroCards = pickVariedEvents(heroEvents.items, HERO_CARD_COUNT);
+  const heroIds = new Set(heroCards.map((event) => event.id));
+  const trendingItems = pickVariedEvents(
+    trending.items.filter((event) => !heroIds.has(event.id)),
+    6,
+  );
 
   // Counted live rather than hard-coded, so the landing page can't drift into
   // claiming numbers that stopped being true.
@@ -79,7 +86,7 @@ export default async function HomePage() {
     <>
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section className="aurora grain relative overflow-hidden border-b border-ink-850">
-        <HeroCollage events={heroEvents.items} />
+        <HeroCollage events={heroCards} />
 
         <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
           <Link
