@@ -239,27 +239,39 @@ curl -X POST localhost:8000/v1/recommendations/preview \
 
 ---
 
-## Curating the landing-page hero
+## Curating the featured surfaces
 
-The hero shows real event artwork from the live catalogue. Scraped artwork
-varies in quality, so any event can be vetoed from the hero without removing it
-from the product:
+The landing page shows real event artwork from the live catalogue, and scraped
+artwork varies in quality. Any event can be vetoed from the **hero and the
+trending grid** without removing it from the product:
 
 ```sql
--- hide from the hero only (still searchable and recommendable)
-update public.events set hero_eligible = false where id = '<event-id>';
+-- hide from featured surfaces (still searchable and recommendable)
+update public.events set featured_eligible = false where id = '<event-id>';
 
 -- see what's currently hidden
-select title, source from public.events where not hero_eligible;
+select title, source from public.events where not featured_eligible;
 
 -- put one back
-update public.events set hero_eligible = true where id = '<event-id>';
+update public.events set featured_eligible = true where id = '<event-id>';
 ```
 
-Eligible events are served by `GET /v1/events/hero`, ordered by popularity —
-which also tends to surface the best-produced artwork, since larger promoters
-ship proper key art. The frontend then picks one event per category so the hero
-shows the breadth of the catalogue rather than three of the same thing.
+Both `hero_events()` and `trending_events()` honour the flag and skip events
+with no artwork. They're ordered by popularity, which also tends to surface the
+best-produced key art, since larger promoters ship proper artwork. The hero
+then picks one event per category, and the landing page removes anything the
+hero already used from the trending grid — the same event twice on one page
+makes the catalogue look thinner than it is.
+
+Note the veto applies to a specific event row. A recurring series re-ingested
+next week arrives as a new row with the flag back at its default.
+
+### Artwork is never cropped
+
+Event images arrive in every aspect ratio. `object-cover` fills the frame but
+guillotines whatever sits near an edge — on a poster that's usually the title.
+Cards therefore render the image with `object-contain` over a blurred, scaled
+copy of itself, giving a full-bleed frame with nothing cut off.
 
 ## Authentication
 
