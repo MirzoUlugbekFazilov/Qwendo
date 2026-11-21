@@ -2,6 +2,9 @@
 
 **Never miss the event you actually care about.**
 
+**Live:** [qwendo.vercel.app](https://qwendo.vercel.app) · **API:**
+[qwendo-api.vercel.app/docs](https://qwendo-api.vercel.app/docs)
+
 Qwendo aggregates events from Ticketmaster, Eventbrite, Luma and more, then ranks
 them against each user's interests using vector search — so people hear about the
 Spider-Man fan meet, the hackathon or the gig *while tickets are still on sale*,
