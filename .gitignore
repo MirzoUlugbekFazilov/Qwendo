@@ -1,7 +1,7 @@
-# env
-.env
-.env.local
-.env*.local
+# env — every real env file is ignored; the templates are not
+.env*
+!.env.example
+!web/.env.local.example
 
 # python
 __pycache__/

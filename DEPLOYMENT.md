@@ -1,5 +1,24 @@
 # Deploying Qwendo
 
+## Live
+
+| Environment | URL | Vercel project |
+|---|---|---|
+| Frontend | <https://qwendo.vercel.app> | `qwendo` (Root Directory `web`) |
+| API | <https://qwendo-api.vercel.app> | `qwendo-api` (Root Directory `.`) |
+| Database | `hfpnbzadymxttjnilkkz.supabase.co` | Supabase, eu-west-1 |
+
+Both projects are connected to `MirzoUlugbekFazilov/Qwendo` and redeploy on every push
+to `main`. "Affected projects" is enabled, so a change confined to `web/` doesn't rebuild
+the API and vice versa.
+
+> **New Vercel projects enable Vercel Authentication by default**, which puts a login wall
+> in front of every `.vercel.app` URL. Both projects here have it turned off
+> (*Settings → Deployment Protection*), because the site and the API must be publicly
+> reachable. Re-check this if you ever recreate a project.
+
+---
+
 Qwendo is **two deployables plus a scheduled job**, all from this one repository:
 
 | Piece | What it is | Where it goes |
