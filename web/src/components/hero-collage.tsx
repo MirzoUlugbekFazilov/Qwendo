@@ -80,8 +80,12 @@ export function HeroCollage({ events }: { events: QwendoEvent[] }) {
             className={`group absolute ${slot.position} ${slot.size} ${slot.dim} transition-opacity duration-300 hover:opacity-100`}
             style={{ animation: `float ${9 + (index % 3)}s ease-in-out ${index * 0.6}s infinite` }}
           >
+            {/* `contain`, not `cover`. Marketplace artwork arrives in every
+                aspect ratio, and cropping to fill always slices somebody's
+                title or logo. Letterboxing against the card background keeps
+                every poster whole and centred. */}
             <span
-              className={`block overflow-hidden rounded-xl bg-ink-850 shadow-[0_26px_55px_-22px_rgb(0_0_0/0.95)] ring-1 ring-mist-100/10 transition-transform duration-300 ${slot.tilt} group-hover:rotate-0 group-hover:scale-[1.03]`}
+              className={`flex aspect-[16/10] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-ink-850 to-ink-900 p-1.5 shadow-[0_26px_55px_-22px_rgb(0_0_0/0.95)] ring-1 ring-mist-100/10 transition-transform duration-300 ${slot.tilt} group-hover:rotate-0 group-hover:scale-[1.03]`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -89,7 +93,7 @@ export function HeroCollage({ events }: { events: QwendoEvent[] }) {
                 alt=""
                 loading="lazy"
                 decoding="async"
-                className="aspect-[16/10] w-full object-cover"
+                className="max-h-full max-w-full rounded-md object-contain"
               />
             </span>
 
