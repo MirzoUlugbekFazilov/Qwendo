@@ -39,6 +39,14 @@ export type EventList = {
   fallback: string | null;
 };
 
+export type CatalogueStats = {
+  events: number;
+  sources: number;
+  cities: number;
+  interests: number;
+  last_updated: string | null;
+};
+
 export type Interest = {
   slug: string;
   label: string;

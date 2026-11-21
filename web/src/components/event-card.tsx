@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { EventImage } from "@/components/event-image";
 import { ClockIcon, MapPinIcon, SparklesIcon } from "@/components/icons";
 import { SaveButton } from "@/components/save-button";
 import {
@@ -8,6 +9,7 @@ import {
   countdownLabel,
   formatDayBadge,
   formatPrice,
+  formatTime,
   locationLabel,
   matchPercent,
 } from "@/lib/format";
@@ -31,6 +33,24 @@ const CATEGORY_TINT: Record<string, string> = {
   family: "from-pink-500/30 to-ink-900",
 };
 
+/** A single coloured dot makes a long grid scannable by category at a glance. */
+const CATEGORY_DOT: Record<string, string> = {
+  tech: "bg-iris-400",
+  business: "bg-sky-400",
+  music: "bg-fuchsia-400",
+  film: "bg-rose-400",
+  gaming: "bg-moss-400",
+  arts: "bg-violet-400",
+  comedy: "bg-orange-400",
+  sports: "bg-lime-400",
+  food: "bg-amber-400",
+  wellness: "bg-teal-400",
+  community: "bg-cyan-400",
+  nightlife: "bg-purple-400",
+  education: "bg-blue-400",
+  family: "bg-pink-400",
+};
+
 export function EventCard({
   event,
   saved = false,
@@ -44,6 +64,7 @@ export function EventCard({
   const match = matchPercent(event);
   const category = event.categories?.[0] ?? "community";
   const tint = CATEGORY_TINT[category] ?? "from-ink-700 to-ink-900";
+  const dot = CATEGORY_DOT[category] ?? "bg-mist-500";
   const soon = countdownLabel(event.starts_at);
   const urgent = soon === "Today" || soon === "Tomorrow";
 
@@ -58,13 +79,8 @@ export function EventCard({
 
       <div className={`relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br ${tint}`}>
         {event.image_url ? (
-          // Artwork comes from many marketplace CDNs; a plain img keeps every host working.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <EventImage
             src={event.image_url}
-            alt=""
-            loading="lazy"
-            decoding="async"
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
           />
         ) : (
@@ -77,11 +93,11 @@ export function EventCard({
 
         {/* Scrim keeps the date chip legible over any artwork. */}
         <div
-          className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-ink-950/80 to-transparent"
+          className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-ink-950/85 to-transparent"
           aria-hidden="true"
         />
 
-        <div className="absolute left-3 top-3 flex flex-col items-center rounded-xl border border-ink-700/80 bg-ink-950/80 px-2.5 py-1.5 backdrop-blur-sm">
+        <div className="absolute left-3 top-3 flex flex-col items-center rounded-xl border border-ink-700/80 bg-ink-950/85 px-2.5 py-1.5 backdrop-blur-sm">
           <span className="font-display text-lg font-extrabold leading-none text-mist-100">
             {badge.day}
           </span>
@@ -103,8 +119,9 @@ export function EventCard({
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="rounded-md bg-ink-800 px-2 py-0.5 font-medium text-mist-300">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-xs">
+          <span className="inline-flex items-center gap-1.5 font-medium text-mist-300">
+            <span className={`h-1.5 w-1.5 rounded-full ${dot}`} aria-hidden="true" />
             {categoryLabel(category)}
           </span>
           <span
@@ -113,7 +130,7 @@ export function EventCard({
             }`}
           >
             <ClockIcon className="h-3.5 w-3.5" />
-            {soon}
+            {soon} · {formatTime(event.starts_at, event.timezone)}
           </span>
         </div>
 

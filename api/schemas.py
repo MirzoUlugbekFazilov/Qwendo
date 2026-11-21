@@ -58,6 +58,18 @@ class EventListOut(BaseModel):
     )
 
 
+class StatsOut(BaseModel):
+    """Live catalogue figures, counted at request time."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    events: int = 0
+    sources: int = 0
+    cities: int = 0
+    interests: int = 0
+    last_updated: datetime | None = None
+
+
 class InterestOut(BaseModel):
     model_config = ConfigDict(extra="ignore")
 

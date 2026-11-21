@@ -222,8 +222,8 @@ Rebuild from scratch: `supabase/migrations/20261121120000_qwendo_init.sql`.
 
 ## API
 
-Public: `GET /v1/interests`, `/v1/events`, `/v1/events/trending`, `/v1/events/{id}`,
-`POST /v1/events/{id}/click`, `POST /v1/recommendations/preview`.
+Public: `GET /v1/interests`, `/v1/stats`, `/v1/events`, `/v1/events/trending`,
+`/v1/events/{id}`, `POST /v1/events/{id}/click`, `POST /v1/recommendations/preview`.
 
 Authenticated (Supabase JWT as bearer): `GET /v1/recommendations`, `/v1/me`,
 `PUT /v1/me/profile`, `PUT /v1/me/interests`, `GET /v1/me/saved`,

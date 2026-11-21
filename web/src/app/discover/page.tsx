@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { EmptyState, EventGrid } from "@/components/event-grid";
 import { FilterBar } from "@/components/filter-bar";
+import { LoadMore } from "@/components/load-more";
 import { SparklesIcon } from "@/components/icons";
 import { SearchBar } from "@/components/search-bar";
 import { EMPTY_LIST, api, safe, type EventQuery } from "@/lib/api";
@@ -43,6 +44,7 @@ export default async function DiscoverPage({
   const categories = asArray(params.categories);
   const freeOnly = params.free_only === "true";
   const when = typeof params.when === "string" ? params.when : undefined;
+  const sort = params.sort === "soon" ? "soon" : "match";
 
   const token = await getAccessToken();
   const filters: EventQuery = {
@@ -53,9 +55,10 @@ export default async function DiscoverPage({
     ...windowFor(when),
   };
 
-  // Signed in and just browsing → personalised ranking.
-  // Searching for something specific → honour the search, don't second-guess it.
-  const personalize = Boolean(token) && !query;
+  // Signed in and just browsing → personalised ranking. A specific search, or
+  // an explicit "starting soonest", is an instruction: honour it rather than
+  // second-guessing with the taste vector.
+  const personalize = Boolean(token) && !query && sort === "match";
 
   const [list, saved] = await Promise.all([
     personalize
@@ -65,7 +68,13 @@ export default async function DiscoverPage({
   ]);
 
   const savedIds = saved.items.map((event) => event.id);
-  const heading = query ? `Results for “${query}”` : personalize ? "Picked for you" : `What's on in ${city}`;
+  const heading = query
+    ? `Results for “${query}”`
+    : personalize
+      ? "Picked for you"
+      : sort === "soon"
+        ? `Starting soonest in ${city}`
+        : `What's on in ${city}`;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -113,7 +122,16 @@ export default async function DiscoverPage({
           }
         />
       ) : (
-        <EventGrid events={list.items} savedIds={savedIds} showReason={personalize} />
+        <>
+          <EventGrid events={list.items} savedIds={savedIds} showReason={personalize} />
+          <LoadMore
+            query={{ ...filters, q: query }}
+            personalized={personalize}
+            savedIds={savedIds}
+            initialOffset={list.items.length}
+            exhausted={list.items.length < 24}
+          />
+        </>
       )}
     </div>
   );

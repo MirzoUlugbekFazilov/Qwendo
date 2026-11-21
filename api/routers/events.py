@@ -8,7 +8,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, HTTPException, Query, status
 
 from api.deps import Db, OptionalUser
-from api.schemas import ClickIn, EventListOut, EventOut, InterestOut, MessageOut
+from api.schemas import ClickIn, EventListOut, EventOut, InterestOut, MessageOut, StatsOut
 from api.services import fetch_interests
 
 router = APIRouter(tags=["events"])
@@ -22,6 +22,13 @@ LIST_COLUMNS = (
 
 def _quote_list(values: list[str]) -> str:
     return "{" + ",".join(f'"{value}"' for value in values) + "}"
+
+
+@router.get("/stats", response_model=StatsOut)
+async def stats(db: Db) -> dict[str, Any]:
+    """Live catalogue figures for the landing page."""
+    payload = await db.rpc("catalogue_stats")
+    return payload or {}
 
 
 @router.get("/interests", response_model=list[InterestOut])

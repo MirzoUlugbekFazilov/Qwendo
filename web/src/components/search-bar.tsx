@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { MapPinIcon, SearchIcon } from "@/components/icons";
 
@@ -30,7 +30,23 @@ export function SearchBar({
 }) {
   const [query, setQuery] = useState(defaultQuery);
   const [city, setCity] = useState(defaultCity);
+  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  // "/" jumps to search from anywhere — the convention on every discovery
+  // product. Ignored while the user is already typing in a field.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+      if (target?.isContentEditable) return;
+      event.preventDefault();
+      inputRef.current?.focus();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   function submit(formEvent: React.FormEvent) {
     formEvent.preventDefault();
@@ -55,12 +71,21 @@ export function SearchBar({
         </label>
         <input
           id="search-query"
+          ref={inputRef}
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Spider-Man, hackathons, techno, networking…"
-          className={`${height} w-full rounded-xl bg-transparent pl-12 pr-4 text-base text-mist-100 placeholder:text-mist-500 focus:outline-none`}
+          className={`${height} w-full rounded-xl bg-transparent pl-12 pr-14 text-base text-mist-100 placeholder:text-mist-500 focus:outline-none`}
         />
+        {!query && (
+          <kbd
+            className="kbd pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 sm:inline-flex"
+            aria-hidden="true"
+          >
+            /
+          </kbd>
+        )}
       </div>
 
       <div className="relative sm:w-48">

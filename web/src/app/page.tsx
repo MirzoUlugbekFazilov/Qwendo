@@ -51,18 +51,21 @@ const STEPS = [
   },
 ];
 
-const FACTS = [
-  { value: "3", label: "marketplaces watched" },
-  { value: "53", label: "interests to match on" },
-  { value: "6h", label: "refresh cycle" },
-  { value: "0", label: "booking fees — we don't sell tickets" },
-];
-
 export default async function HomePage() {
-  const [interests, trending] = await Promise.all([
+  const [interests, trending, stats] = await Promise.all([
     safe(api.interests(), []),
     safe(api.trending("London", 6), EMPTY_LIST),
+    safe(api.stats(), { events: 0, sources: 0, cities: 0, interests: 0, last_updated: null }),
   ]);
+
+  // Counted live rather than hard-coded, so the landing page can't drift into
+  // claiming numbers that stopped being true.
+  const facts = [
+    { value: stats.events ? stats.events.toLocaleString("en-GB") : "—", label: "upcoming events tracked" },
+    { value: stats.sources || "—", label: "marketplaces watched" },
+    { value: stats.interests || "—", label: "interests to match on" },
+    { value: "0", label: "booking fees — we don't sell tickets" },
+  ];
 
   return (
     <>
@@ -105,7 +108,7 @@ export default async function HomePage() {
         {/* Facts strip grounds the promise in specifics. */}
         <div className="border-t border-ink-850/70">
           <dl className="mx-auto grid max-w-5xl grid-cols-2 gap-px bg-ink-850/70 sm:grid-cols-4">
-            {FACTS.map((fact) => (
+            {facts.map((fact) => (
               <div key={fact.label} className="bg-ink-950/60 px-4 py-6 text-center">
                 <dt className="sr-only">{fact.label}</dt>
                 <dd>
@@ -123,7 +126,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Problem ──────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <section className="reveal mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="max-w-2xl">
           <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
             The event was perfect. You just found out too late.
@@ -152,7 +155,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Live demo ────────────────────────────────────────── */}
-      <section className="relative border-y border-ink-850 bg-ink-900/50">
+      <section className="reveal relative border-y border-ink-850 bg-ink-900/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="mb-10 max-w-2xl">
             <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
@@ -168,7 +171,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── How it works ─────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <section className="reveal mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
           How it works
         </h2>
@@ -198,7 +201,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Categories ───────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+      <section className="reveal mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
         <h2 className="font-display text-2xl font-extrabold text-mist-100">
           Browse by what you like
         </h2>
@@ -217,7 +220,7 @@ export default async function HomePage() {
 
       {/* ── Trending ─────────────────────────────────────────── */}
       {trending.items.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+        <section className="reveal mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="font-display text-2xl font-extrabold text-mist-100">
@@ -240,7 +243,7 @@ export default async function HomePage() {
       )}
 
       {/* ── CTA ──────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+      <section className="reveal mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
         <div className="aurora grain surface relative overflow-hidden rounded-card px-6 py-16 text-center sm:px-12">
           <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
             Your next favourite night is{" "}

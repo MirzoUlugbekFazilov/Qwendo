@@ -1,4 +1,4 @@
-import type { EventList, Interest, Me, QwendoEvent } from "@/lib/types";
+import type { CatalogueStats, EventList, Interest, Me, QwendoEvent } from "@/lib/types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -122,6 +122,8 @@ function toSearchParams(query: EventQuery = {}): string {
 
 export const api = {
   interests: () => request<Interest[]>("/v1/interests", { revalidate: 3600 }),
+
+  stats: () => request<CatalogueStats>("/v1/stats", { revalidate: 600 }),
 
   events: (query: EventQuery = {}) =>
     request<EventList>(`/v1/events${toSearchParams(query)}`, { revalidate: 120 }),

@@ -2,10 +2,8 @@ import Link from "next/link";
 
 import { BookmarkIcon, CompassIcon, SparklesIcon } from "@/components/icons";
 import { Logo } from "@/components/logo";
+import { NavLink } from "@/components/nav-link";
 import { getUser } from "@/lib/supabase/server";
-
-const navLink =
-  "inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg px-3 text-sm font-medium text-mist-300 transition-colors duration-200 hover:bg-ink-800 hover:text-mist-100";
 
 export async function Navbar() {
   const user = await getUser();
@@ -24,21 +22,21 @@ export async function Navbar() {
         <Logo />
 
         <div className="flex items-center gap-1 sm:gap-1.5">
-          <Link href="/discover" className={navLink}>
+          <NavLink href="/discover">
             <CompassIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Discover</span>
-          </Link>
+          </NavLink>
 
           {user ? (
             <>
-              <Link href="/saved" className={navLink}>
+              <NavLink href="/saved">
                 <BookmarkIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Saved</span>
-              </Link>
-              <Link href="/onboarding" className={`${navLink} hidden sm:inline-flex`}>
+              </NavLink>
+              <NavLink href="/onboarding" className="hidden sm:inline-flex">
                 <SparklesIcon className="h-4 w-4 text-iris-400" />
                 Interests
-              </Link>
+              </NavLink>
 
               <span
                 className="ml-1 grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-iris-500 to-moss-500 text-sm font-bold text-ink-950 ring-1 ring-ink-700"
@@ -68,7 +66,10 @@ export async function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className={navLink}>
+              <Link
+                href="/login"
+                className="inline-flex h-10 cursor-pointer items-center rounded-lg px-3 text-sm font-medium text-mist-300 transition-colors duration-200 hover:bg-ink-800 hover:text-mist-100"
+              >
                 Sign in
               </Link>
               <Link href="/login?mode=signup" className="btn btn-primary h-10 px-4">

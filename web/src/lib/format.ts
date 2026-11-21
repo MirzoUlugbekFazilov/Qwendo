@@ -38,6 +38,15 @@ export function formatDate(value: string, timeZone?: string | null): string {
   }).format(date);
 }
 
+/** "19:30" — the single most-asked question about an event after the date. */
+export function formatTime(value: string, timeZone?: string | null): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: timeZone ?? undefined,
+  }).format(new Date(value));
+}
+
 export function formatDayBadge(value: string): { day: string; month: string } {
   const date = new Date(value);
   return {

@@ -37,6 +37,8 @@ export function FilterBar() {
     });
   }
 
+  const sort = params.get("sort") ?? "match";
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
@@ -84,6 +86,26 @@ export function FilterBar() {
           </select>
         </div>
 
+        <div className="flex items-center gap-2">
+          <label htmlFor="sort" className="text-sm text-mist-400">
+            Sort
+          </label>
+          <select
+            id="sort"
+            value={sort}
+            onChange={(event) =>
+              update((next) => {
+                if (event.target.value === "match") next.delete("sort");
+                else next.set("sort", event.target.value);
+              })
+            }
+            className="h-10 cursor-pointer rounded-lg border border-ink-700 bg-ink-850 px-3 text-sm text-mist-200 transition-colors duration-200 hover:border-ink-500 focus:outline-none"
+          >
+            <option value="match">Best match</option>
+            <option value="soon">Starting soonest</option>
+          </select>
+        </div>
+
         <button
           type="button"
           onClick={() =>
@@ -102,7 +124,7 @@ export function FilterBar() {
           Free only
         </button>
 
-        {(activeCategories.length > 0 || when || freeOnly) && (
+        {(activeCategories.length > 0 || when || freeOnly || sort !== "match") && (
           <button
             type="button"
             onClick={() =>
@@ -110,6 +132,7 @@ export function FilterBar() {
                 next.delete("categories");
                 next.delete("when");
                 next.delete("free_only");
+                next.delete("sort");
               })
             }
             className="h-10 cursor-pointer px-2 text-sm text-mist-500 underline-offset-4 transition-colors duration-200 hover:text-mist-200 hover:underline"
