@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EventGrid } from "@/components/event-grid";
+import { HeroCollage } from "@/components/hero-collage";
 import {
   ArrowRightIcon,
   BellIcon,
@@ -54,7 +55,8 @@ const STEPS = [
 export default async function HomePage() {
   const [interests, trending, stats] = await Promise.all([
     safe(api.interests(), []),
-    safe(api.trending("London", 6), EMPTY_LIST),
+    // Extra rows feed the hero collage; the grid below shows the first six.
+    safe(api.trending("London", 16), EMPTY_LIST),
     safe(api.stats(), { events: 0, sources: 0, cities: 0, interests: 0, last_updated: null }),
   ]);
 
@@ -71,33 +73,43 @@ export default async function HomePage() {
     <>
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section className="aurora grain relative overflow-hidden border-b border-ink-850">
-        <div className="mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
-          <span className="animate-fade inline-flex items-center gap-2 rounded-pill border border-iris-500/30 bg-iris-500/10 px-4 py-1.5 text-xs font-semibold text-iris-200 backdrop-blur">
-            <SparklesIcon className="h-3.5 w-3.5" />
-            AI event discovery across every marketplace
-          </span>
+        <HeroCollage events={trending.items} />
 
-          <h1 className="mt-7 font-display text-[2.5rem] font-extrabold leading-[1.05] sm:text-6xl lg:text-[4.25rem]">
-            <span className="block text-mist-100">Never miss the event</span>
-            <span className="text-gradient block">you actually care about</span>
+        <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
+          <Link
+            href="/discover"
+            className="animate-fade group inline-flex items-center gap-2.5 rounded-pill border border-ink-700 bg-ink-900/80 py-1.5 pl-1.5 pr-3.5 text-xs font-medium text-mist-300 backdrop-blur transition-colors duration-200 hover:border-ink-500 hover:text-mist-100"
+          >
+            <span className="rounded-pill bg-iris-500/20 px-2.5 py-1 text-[0.6875rem] font-semibold text-iris-200">
+              Live
+            </span>
+            {stats.events > 0
+              ? `${stats.events.toLocaleString("en-GB")} events tracked right now`
+              : "AI event discovery across every marketplace"}
+            <ArrowRightIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+          </Link>
+
+          <h1 className="mt-7 font-display text-[2.75rem] font-extrabold leading-[1.02] tracking-[-0.035em] text-mist-100 sm:text-[4rem] lg:text-[4.75rem]">
+            <span className="block">Never miss the event</span>
+            <span className="block">you actually care about</span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-mist-400">
+          <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-mist-400">
             Qwendo reads Ticketmaster, Eventbrite and Luma for you, then ranks what&apos;s on
-            against your interests — so you hear about it while tickets are still on sale.
+            against your interests — while tickets are still on sale.
           </p>
 
           <div className="mx-auto mt-10 max-w-3xl">
             <SearchBar />
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm text-mist-500">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm text-mist-500">
             <span>Popular:</span>
             {["Spider-Man", "Hackathons", "Live music", "Networking", "Comedy"].map((term) => (
               <Link
                 key={term}
                 href={`/discover?q=${encodeURIComponent(term)}&city=London`}
-                className="cursor-pointer rounded-pill border border-ink-800 px-3 py-1 text-mist-300 transition-colors duration-200 hover:border-iris-400/60 hover:bg-iris-500/10 hover:text-iris-200"
+                className="cursor-pointer rounded-pill border border-ink-800 bg-ink-900/60 px-3 py-1 text-mist-300 backdrop-blur transition-colors duration-200 hover:border-iris-400/60 hover:bg-iris-500/10 hover:text-iris-200"
               >
                 {term}
               </Link>
@@ -105,17 +117,18 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Facts strip grounds the promise in specifics. */}
-        <div className="border-t border-ink-850/70">
-          <dl className="mx-auto grid max-w-5xl grid-cols-2 gap-px bg-ink-850/70 sm:grid-cols-4">
+        {/* Facts strip grounds the promise in specifics. `relative` keeps it
+            above the collage, which is absolutely positioned across the hero. */}
+        <div className="relative border-t border-ink-800 bg-ink-950/80 backdrop-blur-sm">
+          <dl className="mx-auto grid max-w-5xl grid-cols-2 gap-px bg-ink-800/80 sm:grid-cols-4">
             {facts.map((fact) => (
-              <div key={fact.label} className="bg-ink-950/60 px-4 py-6 text-center">
+              <div key={fact.label} className="bg-ink-950/90 px-4 py-6 text-center backdrop-blur-sm">
                 <dt className="sr-only">{fact.label}</dt>
                 <dd>
                   <span className="font-display text-2xl font-extrabold text-mist-100">
                     {fact.value}
                   </span>
-                  <span className="mt-1 block text-xs leading-snug text-mist-500">
+                  <span className="mt-1 block text-xs leading-snug text-mist-400">
                     {fact.label}
                   </span>
                 </dd>
@@ -238,7 +251,7 @@ export default async function HomePage() {
               <ArrowRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
           </div>
-          <EventGrid events={trending.items} showReason={false} />
+          <EventGrid events={trending.items.slice(0, 6)} showReason={false} />
         </section>
       )}
 
