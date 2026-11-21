@@ -6,25 +6,28 @@ import type { QwendoEvent } from "@/lib/types";
 /**
  * Posters from the live catalogue, arranged either side of the hero.
  *
- * Three rules this layout follows:
+ * Rules this layout follows:
  *   1. Nothing is clipped by the viewport edge — a half-cut poster reads as a
- *      bug, not as a design.
- *   2. The centre column stays clear. Posters live in the outer margins only,
- *      so they never fight the headline or the search field.
- *   3. They are real, and they link to the real event. The hero demonstrates
- *      the product rather than decorating around it.
+ *      bug, not a design.
+ *   2. The centre column stays clear, so posters never fight the headline.
+ *   3. Nothing is drawn on top of the artwork. Marketplace posters carry their
+ *      own title in the image; a badge over it hides the very thing that makes
+ *      the poster meaningful.
+ *   4. The caption names the actual event, not just its category. "Female
+ *      Founder Pitch Night" says far more than "TECH" — the category alone is
+ *      accurate but tells a first-time visitor almost nothing.
  */
 
 type Slot = { position: string; size: string; tilt: string; dim: string };
 
-// Outer margins only: every `left`/`right` plus its width stays well inside
-// the viewport, and nothing enters the middle ~55% where the text sits.
+// Outer margins only: every offset plus its width stays inside the frame, and
+// nothing enters the middle where the text sits.
 const LEFT_SLOTS: Slot[] = [
-  { position: "left-[3%] top-[8%]", size: "w-[8.5rem]", tilt: "-rotate-[7deg]", dim: "opacity-75" },
-  { position: "left-[9%] top-[40%]", size: "w-[7.5rem]", tilt: "rotate-[6deg]", dim: "opacity-60" },
-  { position: "left-[2%] top-[66%]", size: "w-[7rem]", tilt: "-rotate-[4deg]", dim: "opacity-50" },
+  { position: "left-[3%] top-[7%]", size: "w-[8.5rem]", tilt: "-rotate-[7deg]", dim: "opacity-75" },
+  { position: "left-[9%] top-[38%]", size: "w-[7.5rem]", tilt: "rotate-[6deg]", dim: "opacity-60" },
+  { position: "left-[2%] top-[58%]", size: "w-[7rem]", tilt: "-rotate-[4deg]", dim: "opacity-50" },
   {
-    position: "left-[14%] top-[20%] hidden 2xl:block",
+    position: "left-[14%] top-[18%] hidden 2xl:block",
     size: "w-[6rem]",
     tilt: "rotate-[9deg]",
     dim: "opacity-40",
@@ -32,11 +35,11 @@ const LEFT_SLOTS: Slot[] = [
 ];
 
 const RIGHT_SLOTS: Slot[] = [
-  { position: "right-[3%] top-[10%]", size: "w-[8.5rem]", tilt: "rotate-[7deg]", dim: "opacity-75" },
-  { position: "right-[9%] top-[42%]", size: "w-[7.5rem]", tilt: "-rotate-[6deg]", dim: "opacity-60" },
-  { position: "right-[2%] top-[68%]", size: "w-[7rem]", tilt: "rotate-[4deg]", dim: "opacity-50" },
+  { position: "right-[3%] top-[9%]", size: "w-[8.5rem]", tilt: "rotate-[7deg]", dim: "opacity-75" },
+  { position: "right-[9%] top-[40%]", size: "w-[7.5rem]", tilt: "-rotate-[6deg]", dim: "opacity-60" },
+  { position: "right-[2%] top-[60%]", size: "w-[7rem]", tilt: "rotate-[4deg]", dim: "opacity-50" },
   {
-    position: "right-[14%] top-[22%] hidden 2xl:block",
+    position: "right-[14%] top-[20%] hidden 2xl:block",
     size: "w-[6rem]",
     tilt: "-rotate-[9deg]",
     dim: "opacity-40",
@@ -45,8 +48,33 @@ const RIGHT_SLOTS: Slot[] = [
 
 const SLOTS = [...LEFT_SLOTS, ...RIGHT_SLOTS];
 
+/**
+ * One event per category first, so the hero shows the breadth of the
+ * catalogue instead of four tech meetups in a row.
+ */
+function pickVaried(events: QwendoEvent[], count: number): QwendoEvent[] {
+  const withArtwork = events.filter((event) => event.image_url);
+  const seen = new Set<string>();
+  const varied: QwendoEvent[] = [];
+
+  for (const event of withArtwork) {
+    const category = event.categories?.[0] ?? "community";
+    if (seen.has(category)) continue;
+    seen.add(category);
+    varied.push(event);
+    if (varied.length === count) return varied;
+  }
+
+  // Top up with whatever is left if the catalogue is narrow today.
+  for (const event of withArtwork) {
+    if (varied.length === count) break;
+    if (!varied.includes(event)) varied.push(event);
+  }
+  return varied;
+}
+
 export function HeroCollage({ events }: { events: QwendoEvent[] }) {
-  const posters = events.filter((event) => event.image_url).slice(0, SLOTS.length);
+  const posters = pickVaried(events, SLOTS.length);
   if (posters.length < 4) return null;
 
   return (
@@ -66,13 +94,8 @@ export function HeroCollage({ events }: { events: QwendoEvent[] }) {
             className={`group absolute ${slot.position} ${slot.size} ${slot.dim} transition-opacity duration-300 hover:opacity-100`}
             style={{ animation: `float ${9 + (index % 4)}s ease-in-out ${index * 0.5}s infinite` }}
           >
-            <span className="mb-1.5 flex items-center gap-1.5 text-[0.625rem] font-semibold uppercase tracking-[0.14em] text-mist-500">
-              <span className="h-1 w-1 rounded-full bg-iris-400" />
-              {categoryLabel(event.categories?.[0] ?? "community")}
-            </span>
-
             <span
-              className={`relative block overflow-hidden rounded-xl ring-1 ring-mist-100/10 shadow-[0_24px_50px_-20px_rgb(0_0_0/0.95)] transition-transform duration-300 ${slot.tilt} group-hover:rotate-0 group-hover:scale-[1.03]`}
+              className={`block overflow-hidden rounded-xl shadow-[0_24px_50px_-20px_rgb(0_0_0/0.95)] ring-1 ring-mist-100/10 transition-transform duration-300 ${slot.tilt} group-hover:rotate-0 group-hover:scale-[1.03]`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -82,8 +105,20 @@ export function HeroCollage({ events }: { events: QwendoEvent[] }) {
                 decoding="async"
                 className="aspect-[3/4] w-full object-cover"
               />
-              <span className="absolute right-1.5 top-1.5 rounded-md bg-ink-950/85 px-1.5 py-0.5 text-[0.5625rem] font-bold leading-tight text-mist-200 backdrop-blur-sm">
-                {badge.day} {badge.month}
+            </span>
+
+            {/* Caption sits below the artwork — never over it. Two lines of
+                title, because one line truncates most event names to nothing. */}
+            <span className="mt-2.5 block px-0.5">
+              <span className="line-clamp-2 text-[0.6875rem] font-semibold leading-snug text-mist-200">
+                {event.title}
+              </span>
+              <span className="mt-1 flex items-center gap-1.5 text-[0.625rem] font-medium text-mist-500">
+                <span className="h-1 w-1 shrink-0 rounded-full bg-iris-400" />
+                <span className="truncate">
+                  {badge.day} {badge.month} ·{" "}
+                  {categoryLabel(event.categories?.[0] ?? "community")}
+                </span>
               </span>
             </span>
           </Link>
