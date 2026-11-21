@@ -75,6 +75,7 @@ class EventbriteSource(EventSource):
 
         events: list[NormalizedEvent] = []
         seen: set[str] = set()
+        blocked = False
 
         async with self.http_client() as client:
             for page in range(1, MAX_PAGES + 1):
@@ -88,6 +89,9 @@ class EventbriteSource(EventSource):
                     if response.status_code == 200:
                         html = response.text
                     else:
+                        # 403/405/429 to a plain GET is Eventbrite's bot defence,
+                        # not a broken URL.
+                        blocked = blocked or response.status_code in (401, 403, 405, 429)
                         log.warning("Eventbrite %s for %s", response.status_code, url)
                 except Exception as exc:  # noqa: BLE001
                     log.warning("Eventbrite request failed (%s): %s", url, exc)
@@ -113,6 +117,14 @@ class EventbriteSource(EventSource):
 
                 if len(events) == before:  # page produced nothing new → stop paging
                     break
+
+        if not events and blocked:
+            log.warning(
+                "Eventbrite refused this IP (HTTP 4xx on a plain GET). Their bot defence "
+                "rejects datacenter ranges, so this source usually returns nothing from CI "
+                "runners or cloud hosts. Run it from a residential connection, route it "
+                "through a proxy, or rely on Ticketmaster/Luma in that environment."
+            )
 
         return events[:limit]
 

@@ -151,7 +151,21 @@ fingerprint means unchanged events are never re-embedded. Every run is recorded 
 Scraped sources depend on page structure that can change without notice — both have a
 Playwright fallback (`python -m playwright install chromium`) and a tolerant tree-walk
 that finds event records wherever they move. When a source breaks, the run is marked
-`failed` in `ingestion_runs` and the other sources carry on.
+`failed` in `ingestion_runs` and the other sources carry on. A source that returns zero
+events is recorded as `partial`, never `success`, so a silent block is visible.
+
+**Eventbrite blocks datacenter IPs.** Verified 2026-11-21: the same request that returns
+80 events from a home connection returns `HTTP 405` from a GitHub Actions runner, and the
+Playwright fallback gets the same treatment. Practical consequences:
+
+| Environment | Ticketmaster | Eventbrite | Luma |
+|---|---|---|---|
+| Local machine | ✅ | ✅ | ✅ |
+| GitHub Actions / cloud host | ✅ (official API) | ❌ blocked | ✅ |
+
+So the scheduled job keeps Luma (and Ticketmaster, once you add a key) fresh, while
+Eventbrite needs either `make ingest` from your own machine or a residential proxy.
+A blocked source does **not** fail the workflow — the others still complete.
 
 Scheduling: `.github/workflows/ingest.yml` runs every 6 hours. Add the same env vars as
 repository secrets.

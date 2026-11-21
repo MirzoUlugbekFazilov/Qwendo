@@ -53,7 +53,11 @@ async def _ingest(args: argparse.Namespace) -> int:
         )
         if row.get("error"):
             print(f"  ↳ {row['error']}")
-    return 0 if all(row["status"] == "success" for row in results) else 1
+
+    # A blocked or empty source is reported, not treated as a build failure:
+    # one marketplace refusing a datacenter IP shouldn't turn the whole
+    # scheduled run red while the other sources are working fine.
+    return 1 if any(row["status"] == "failed" for row in results) else 0
 
 
 async def _seed(_: argparse.Namespace) -> int:

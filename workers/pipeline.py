@@ -156,10 +156,21 @@ async def ingest_source(
 
         inserted, updated, skipped = await upsert_events(db, events)
         summary.update(inserted=inserted, updated=updated, skipped=skipped)
-        log.info(
-            "%s/%s: %s found, %s new, %s updated",
-            source.slug, city or "anywhere", len(events), inserted, updated,
-        )
+
+        if not events:
+            # Don't record "success" for a run that produced nothing — that is
+            # almost always a blocked request or a changed page layout, and it
+            # should be visible in ingestion_runs rather than silently fine.
+            summary.update(
+                status="partial",
+                error="source returned no events (blocked request, or the page layout changed)",
+            )
+            log.warning("%s/%s: no events returned", source.slug, city or "anywhere")
+        else:
+            log.info(
+                "%s/%s: %s found, %s new, %s updated",
+                source.slug, city or "anywhere", len(events), inserted, updated,
+            )
     except Exception as exc:  # noqa: BLE001 - a failing source must not stop the run
         summary.update(status="failed", error=str(exc))
         log.exception("Ingestion failed for %s/%s", source.slug, city)
@@ -173,7 +184,7 @@ async def ingest_source(
                 "inserted": summary["inserted"],
                 "updated": summary["updated"],
                 "skipped": summary["skipped"],
-                "errors": 1 if summary["status"] == "failed" else 0,
+                "errors": 1 if summary["status"] in ("failed", "partial") else 0,
                 "error_text": summary["error"],
                 "finished_at": datetime.now(timezone.utc).isoformat(),
             },
