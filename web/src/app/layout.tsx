@@ -22,7 +22,8 @@ const bodySans = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://qwendo.com"),
+  metadataBase: new URL("https://qwendo.co"),
+  alternates: { canonical: "/" },
   title: {
     default: "Qwendo — never miss the event you care about",
     template: "%s · Qwendo",
