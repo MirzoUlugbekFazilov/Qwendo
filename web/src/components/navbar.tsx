@@ -16,7 +16,7 @@ export async function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-ink-850/80 bg-ink-950/70 backdrop-blur-xl">
       <nav
-        className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+        className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-1 px-3 sm:gap-4 sm:px-6 lg:px-8"
         aria-label="Main"
       >
         <Logo />
@@ -68,11 +68,11 @@ export async function Navbar() {
             <>
               <Link
                 href="/login"
-                className="inline-flex h-10 cursor-pointer items-center rounded-lg px-3 text-sm font-medium text-mist-300 transition-colors duration-200 hover:bg-ink-800 hover:text-mist-100"
+                className="inline-flex h-10 whitespace-nowrap cursor-pointer items-center rounded-lg px-3 text-sm font-medium text-mist-300 transition-colors duration-200 hover:bg-ink-800 hover:text-mist-100"
               >
                 Sign in
               </Link>
-              <Link href="/login?mode=signup" className="btn btn-primary h-10 px-4">
+              <Link href="/login?mode=signup" className="btn btn-primary h-10 whitespace-nowrap px-2 sm:px-4">
                 Get started
               </Link>
             </>

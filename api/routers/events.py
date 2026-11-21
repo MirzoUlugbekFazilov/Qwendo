@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, status
 
+from api.listing_details import enrich_listing
 from api.deps import Db, OptionalUser
 from api.schemas import ClickIn, EventListOut, EventOut, InterestOut, MessageOut, StatsOut
 from api.services import fetch_interests
@@ -53,6 +55,9 @@ async def list_events(
 ) -> EventListOut:
     """Browse the catalogue. Uses Postgres full-text search when `q` is present."""
     if q:
+        # Generic listing words add a mandatory term to Postgres full-text search.
+        q = re.sub(r"\bevents?\b", " ", q, flags=re.IGNORECASE).strip() or q
+    if q and not (free_only or sources or not include_online):
         rows = await db.rpc(
             "search_events",
             {
@@ -69,6 +74,8 @@ async def list_events(
     else:
         filters: dict[str, str] = {"status": "neq.expired"}
         filters["starts_at"] = f"gte.{(starts_after or datetime.now().astimezone()).isoformat()}"
+        if q:
+            filters["search_tsv"] = f"wfts(english).{q}"
         if starts_before:
             filters["and"] = f"(starts_at.lte.{starts_before.isoformat()})"
         if categories:
@@ -146,7 +153,7 @@ async def get_event(db: Db, event_id: str) -> dict[str, Any]:
     )
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
-    return event
+    return await enrich_listing(event)
 
 
 @router.post(

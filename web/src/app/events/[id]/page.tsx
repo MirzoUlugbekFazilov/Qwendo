@@ -10,7 +10,8 @@ import { ApiError, EMPTY_LIST, api, safe } from "@/lib/api";
 import {
   SOURCE_LABELS,
   categoryLabel,
-  countdownLabel,
+  calendarLabel,
+  eventZone,
   formatDate,
   formatPrice,
   hostnameOf,
@@ -110,7 +111,7 @@ export default async function EventPage({ params }: Props) {
               ))}
               <span className="inline-flex items-center gap-1.5 rounded-md border border-moss-400/30 bg-moss-400/10 px-2.5 py-1 font-medium text-moss-300">
                 <ClockIcon className="h-3.5 w-3.5" />
-                {countdownLabel(event.starts_at)}
+                {calendarLabel(event.starts_at, eventZone(event))}
               </span>
             </div>
 
@@ -118,16 +119,16 @@ export default async function EventPage({ params }: Props) {
               {event.title}
             </h1>
 
-            {event.organizer && (
+            {event.organizer && event.organizer.trim().toLowerCase() !== event.source && (
               <p className="text-sm text-mist-400">Organised by {event.organizer}</p>
             )}
           </header>
 
-          {event.description && (
+          {(
             <section className="space-y-3">
               <h2 className="font-display text-lg font-semibold text-mist-100">About this event</h2>
               <p className="whitespace-pre-line text-[0.95rem] leading-relaxed text-mist-300">
-                {event.description}
+                {event.description || event.summary || <a className="underline" href={event.url}>Read the event overview on {sourceLabel}</a>}
               </p>
             </section>
           )}
@@ -159,7 +160,8 @@ export default async function EventPage({ params }: Props) {
                 <div>
                   <dt className="text-mist-500">Starts</dt>
                   <dd className="font-medium text-mist-100">
-                    {formatDate(event.starts_at, event.timezone)}
+                    {formatDate(event.starts_at, eventZone(event))}
+                    {event.ends_at && <span className="block">Ends {formatDate(event.ends_at, eventZone(event))}</span>}
                   </dd>
                 </div>
               </div>
@@ -173,7 +175,7 @@ export default async function EventPage({ params }: Props) {
                 <div>
                   <dt className="text-mist-500">{event.is_online ? "Format" : "Venue"}</dt>
                   <dd className="font-medium text-mist-100">
-                    {event.is_online ? "Online event" : (event.venue_name ?? "To be announced")}
+                    {event.is_online ? "Online event" : (event.venue_name || event.address || `Check ${sourceLabel} for location details`)}
                   </dd>
                   {event.address && <dd className="mt-0.5 text-mist-400">{event.address}</dd>}
                 </div>
@@ -212,7 +214,7 @@ export default async function EventPage({ params }: Props) {
               , where you complete the booking.
             </p>
 
-            {!event.is_online && event.lat && event.lng && (
+            {!event.is_online && event.address && event.lat != null && event.lng != null && (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lng}`}
                 target="_blank"

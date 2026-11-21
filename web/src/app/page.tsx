@@ -114,6 +114,7 @@ export default async function HomePage() {
 
           <div className="mx-auto mt-10 max-w-3xl">
             <SearchBar />
+            <a href="#matching-demo" className="mt-3 inline-block py-2 text-sm font-semibold text-iris-300 underline">Try my recommendations</a>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm text-mist-500">
@@ -181,7 +182,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── Live demo ────────────────────────────────────────── */}
-      <section className="reveal relative border-y border-ink-850 bg-ink-900/50">
+      <section id="matching-demo" className="reveal relative scroll-mt-16 border-y border-ink-850 bg-ink-900/50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="mb-10 max-w-2xl">
             <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">

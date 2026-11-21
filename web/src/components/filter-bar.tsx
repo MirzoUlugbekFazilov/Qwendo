@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { CATEGORY_LABELS } from "@/lib/format";
@@ -11,6 +12,7 @@ const WHEN_OPTIONS = [
 ];
 
 export function FilterBar() {
+  const [expanded, setExpanded] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -40,7 +42,11 @@ export function FilterBar() {
   const sort = params.get("sort") ?? "match";
 
   return (
-    <div className="space-y-4">
+    <div>
+      <button type="button" className="btn btn-ghost h-10 sm:hidden" aria-controls="discover-filters" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+        Filters{activeCategories.length || when || freeOnly || sort !== "match" ? " · active" : ""}
+      </button>
+      <div id="discover-filters" className={`space-y-4 sm:block ${expanded ? "block" : "hidden"}`}>
       <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by category">
         {Object.entries(CATEGORY_LABELS).map(([slug, label]) => {
           const active = activeCategories.includes(slug);
@@ -140,6 +146,7 @@ export function FilterBar() {
             Clear filters
           </button>
         )}
+      </div>
       </div>
     </div>
   );

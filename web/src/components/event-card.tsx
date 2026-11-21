@@ -6,7 +6,8 @@ import { SaveButton } from "@/components/save-button";
 import {
   SOURCE_LABELS,
   categoryLabel,
-  countdownLabel,
+  calendarLabel,
+  eventZone,
   formatDayBadge,
   formatPrice,
   formatTime,
@@ -60,13 +61,12 @@ export function EventCard({
   saved?: boolean;
   showReason?: boolean;
 }) {
-  const badge = formatDayBadge(event.starts_at);
+  const badge = formatDayBadge(event.starts_at, eventZone(event));
   const match = matchPercent(event);
   const category = event.categories?.[0] ?? "community";
   const tint = CATEGORY_TINT[category] ?? "from-ink-700 to-ink-900";
   const dot = CATEGORY_DOT[category] ?? "bg-mist-500";
-  const soon = countdownLabel(event.starts_at);
-  const urgent = soon === "Today" || soon === "Tomorrow";
+  const soon = calendarLabel(event.starts_at, eventZone(event));
 
   return (
     <article className="surface surface-hover gradient-ring group relative flex flex-col overflow-hidden rounded-card">
@@ -125,12 +125,10 @@ export function EventCard({
             {categoryLabel(category)}
           </span>
           <span
-            className={`inline-flex items-center gap-1 font-medium ${
-              urgent ? "text-moss-300" : "text-mist-400"
-            }`}
+            className="inline-flex items-center gap-1 font-medium text-mist-400"
           >
             <ClockIcon className="h-3.5 w-3.5" />
-            {soon} · {formatTime(event.starts_at, event.timezone)}
+            {soon} · {formatTime(event.starts_at, eventZone(event))}
           </span>
         </div>
 

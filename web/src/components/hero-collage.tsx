@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { categoryLabel, formatDayBadge } from "@/lib/format";
+import { categoryLabel, eventZone, formatDayBadge } from "@/lib/format";
 import type { QwendoEvent } from "@/lib/types";
 
 /**
@@ -45,7 +45,7 @@ export function HeroCollage({ events }: { events: QwendoEvent[] }) {
     <div className="absolute inset-x-0 top-0 hidden h-[calc(100%-6rem)] lg:block">
       {cards.map((event, index) => {
         const slot = SLOTS[index];
-        const badge = formatDayBadge(event.starts_at);
+        const badge = formatDayBadge(event.starts_at, eventZone(event));
 
         return (
           <Link

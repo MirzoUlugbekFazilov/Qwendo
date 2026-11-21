@@ -186,6 +186,9 @@ class EventbriteSource(EventSource):
             venue = raw.get("primary_venue") or {}
             address = venue.get("address") or {}
 
+            organizer = raw.get("primary_organizer") or raw.get("organizer")
+            if isinstance(organizer, dict):
+                organizer = organizer.get("name")
             title = clean_title(raw.get("name"))
             description = strip_html(raw.get("full_description") or raw.get("summary") or "")
 
@@ -235,7 +238,7 @@ class EventbriteSource(EventSource):
                 price_max=None,
                 currency=None,
                 is_free=False,
-                organizer=raw.get("tickets_by"),
+                organizer=organizer if isinstance(organizer, str) else None,
                 categories=infer_categories(
                     title, description, category, " ".join(labels), seed=seed
                 ),

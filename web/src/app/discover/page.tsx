@@ -77,9 +77,9 @@ export default async function DiscoverPage({
         : `What's on in ${city}`;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mb-8 space-y-6">
-        <SearchBar defaultQuery={query ?? ""} defaultCity={city} size="sm" />
+    <div className="mx-auto max-w-7xl px-4 py-4 sm:py-10 sm:px-6 lg:px-8">
+      <div className="mb-4 space-y-2 sm:mb-8 sm:space-y-6">
+        <SearchBar key={JSON.stringify([query, city])} defaultQuery={query ?? ""} defaultCity={city} size="sm" filters={Object.entries(params).filter(([key]) => ["when", "free_only", "categories", "sort"].includes(key)).flatMap(([key, values]) => asArray(values).map((value): [string, string] => [key, value]))} />
         <FilterBar />
       </div>
 
