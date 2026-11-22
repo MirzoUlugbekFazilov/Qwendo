@@ -59,11 +59,17 @@ async def add_cover_images(fetcher, row, events):
         return events
     cap = min(int(config.get("detail_limit") or DETAIL_IMAGE_LIMIT), DETAIL_IMAGE_LIMIT)
     deadline = time.monotonic() + DETAIL_IMAGE_SECONDS
+    # Events whose cover is already stored: the feed never carries one, so
+    # without this the budget goes on re-fetching the same pages each run and
+    # the tail of the feed is never reached.
+    covered = row.get("covered_images") or set()
     fetched = 0
     for event in events:
         if fetched >= cap or time.monotonic() > deadline:
             break
-        if not event or event.image_url or not allowed_detail(event.url, fetcher.hosts):
+        if not event or event.image_url or event.external_id in covered:
+            continue
+        if not allowed_detail(event.url, fetcher.hosts):
             continue
         fetched += 1
         try:

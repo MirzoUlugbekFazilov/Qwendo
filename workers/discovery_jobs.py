@@ -146,6 +146,20 @@ async def execute(db, job, discover):
             }, upsert=True, on_conflict="job_id,attempt", returning="minimal")
 
 
+async def covered_images(db, source):
+    """External ids this source has already supplied a cover for.
+
+    Calendar feeds carry no artwork, so without this the connector cannot tell
+    a cover it fetched last run from one it has never had, and would spend its
+    whole page budget re-fetching the same events every time.
+    """
+    if (source.get("config") or {}).get("detail_images") is not True:
+        return set()
+    rows = await read_all(db, "events", "external_id", "external_id",
+                          {"source": f"eq.{source['slug']}", "image_url": "not.is.null"})
+    return {row["external_id"] for row in rows if row.get("external_id")}
+
+
 async def process_job(db, job, source, discover):
     if not source or not source["enabled"] or not source["permission"].strip() or not source["allowed_hosts"]:
         raise ValueError("Source permission required")
@@ -182,7 +196,9 @@ async def process_job(db, job, source, discover):
         from workers.connectors import collect_reviews
         with collect_reviews() as reviews:
             try:
-                events = await discover({**source, "config": config}, limit=limit)
+                events = await discover(
+                    {**source, "config": config, "covered_images": await covered_images(db, source)},
+                    limit=limit)
             finally:
                 if reviews:
                     await db.rpc("discovery_quarantine", {

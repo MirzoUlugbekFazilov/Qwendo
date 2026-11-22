@@ -100,6 +100,18 @@ class Connectors(unittest.TestCase):
             plain = asyncio.run(discover({**source, "config": {}}, limit=10))
         self.assertIsNone(plain[0].image_url)
 
+        # An event whose cover is already stored is left alone, so a run's page
+        # budget always reaches events that still need one.
+        visited = []
+
+        async def record(self, link, **kwargs):
+            visited.append(link)
+            return (link, detail if link == URL else feed)
+
+        with patch.object(Fetcher, "get", new=record):
+            asyncio.run(discover({**source, "covered_images": {"cover1"}}, limit=10))
+        self.assertEqual(visited, [f"https://{HOST}/feed.ics"])
+
     def test_city_scoped_syndication(self):
         body = (f"BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:venue123\nSUMMARY:Trio\n"
                 f"DTSTART:20270701T193000Z\nURL:{URL}\nEND:VEVENT\nEND:VCALENDAR").encode()
