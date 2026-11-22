@@ -115,6 +115,12 @@
 @layer base {
   :root {
     color-scheme: dark;
+
+    /* Brand mark: purple through sky to mint, plus the glass glint. */
+    --logo-from: #a78bfa;
+    --logo-via: #6cc0e5;
+    --logo-to: #34d399;
+    --logo-glint: #ffffff;
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -131,6 +137,13 @@
      ═══════════════════════════════════════════════════════════════ */
   :root[data-theme="light"] {
     color-scheme: light;
+
+    /* The pastel mark disappears on white, so each stop deepens a step and
+       the glint becomes a lavender tint rather than invisible white. */
+    --logo-from: #7c3aed;
+    --logo-via: #3f9fd8;
+    --logo-to: #10b981;
+    --logo-glint: #ddd3fb;
 
     /* surfaces: white page, cool gray steps upward */
     --color-ink-950: #ffffff;

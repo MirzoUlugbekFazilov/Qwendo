@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36">
+  <!-- Favicon version of the Qwendo mark: colours are baked in, since a tab
+       icon cannot read the page's theme variables. Strokes run a little
+       heavier than the in-app mark so the ring survives 16px. -->
+  <defs>
+    <linearGradient id="g" x1="6" y1="4" x2="30" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a78bfa" />
+      <stop offset="52%" stop-color="#5bb8e4" />
+      <stop offset="100%" stop-color="#2dd4a7" />
+    </linearGradient>
+  </defs>
+  <path d="M26.4 26.4 31.6 31.6" fill="none" stroke="url(#g)" stroke-width="4" stroke-linecap="round" />
+  <circle cx="17" cy="17" r="12.8" fill="none" stroke="url(#g)" stroke-width="3.8" />
+</svg>
