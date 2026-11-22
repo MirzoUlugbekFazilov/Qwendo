@@ -19,18 +19,21 @@ import type { QwendoEvent } from "@/lib/types";
 
 type Slot = { position: string; size: string; tilt: string; dim: string };
 
-// Outer margins only, with enough room beneath each card for a two-line
-// caption before the container ends.
+// Outer margins only, with room beneath each card for a two-line caption.
+//
+// The inset tightens as the viewport grows: at lg the headline is nearly as
+// wide as the screen, so cards must hug the edge, while from xl upward there
+// is slack to pull them toward the centre and close the empty gutters.
 const LEFT_SLOTS: Slot[] = [
-  { position: "left-[2%] top-[8%]", size: "w-[13rem]", tilt: "-rotate-[5deg]", dim: "opacity-80" },
-  { position: "left-[5%] top-[38%]", size: "w-[12rem]", tilt: "rotate-[4deg]", dim: "opacity-65" },
-  { position: "left-[1%] top-[66%]", size: "w-[11rem]", tilt: "-rotate-[3deg]", dim: "opacity-45" },
+  { position: "left-[2%] xl:left-[5%] 2xl:left-[8%] top-[8%]", size: "w-[13rem]", tilt: "-rotate-[5deg]", dim: "opacity-80" },
+  { position: "left-[5%] xl:left-[8%] 2xl:left-[11%] top-[38%]", size: "w-[12rem]", tilt: "rotate-[4deg]", dim: "opacity-65" },
+  { position: "left-[1%] xl:left-[4%] 2xl:left-[7%] top-[66%]", size: "w-[11rem]", tilt: "-rotate-[3deg]", dim: "opacity-45" },
 ];
 
 const RIGHT_SLOTS: Slot[] = [
-  { position: "right-[2%] top-[10%]", size: "w-[13rem]", tilt: "rotate-[5deg]", dim: "opacity-80" },
-  { position: "right-[5%] top-[40%]", size: "w-[12rem]", tilt: "-rotate-[4deg]", dim: "opacity-65" },
-  { position: "right-[1%] top-[68%]", size: "w-[11rem]", tilt: "rotate-[3deg]", dim: "opacity-45" },
+  { position: "right-[2%] xl:right-[5%] 2xl:right-[8%] top-[10%]", size: "w-[13rem]", tilt: "rotate-[5deg]", dim: "opacity-80" },
+  { position: "right-[5%] xl:right-[8%] 2xl:right-[11%] top-[40%]", size: "w-[12rem]", tilt: "-rotate-[4deg]", dim: "opacity-65" },
+  { position: "right-[1%] xl:right-[4%] 2xl:right-[7%] top-[68%]", size: "w-[11rem]", tilt: "rotate-[3deg]", dim: "opacity-45" },
 ];
 
 const SLOTS = [...LEFT_SLOTS, ...RIGHT_SLOTS];
