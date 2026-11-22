@@ -375,6 +375,16 @@
     opacity: 1;
   }
 
+  /* Scrollable rails (filter chips) keep their scrollbar out of the layout —
+     the row is swiped on touch and the chips themselves signal the overflow. */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Keyboard hint chip in the search field. */
   .kbd {
     display: inline-flex;
