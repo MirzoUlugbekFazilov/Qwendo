@@ -39,8 +39,9 @@ export default async function DiscoverPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const query = typeof params.q === "string" ? params.q : undefined;
-  const city = typeof params.city === "string" ? params.city : "London";
+  const query = typeof params.q === "string" ? params.q.trim() || undefined : undefined;
+  const selectedCity = typeof params.city === "string" ? params.city.trim() || undefined : undefined;
+  const city = selectedCity ?? (query ? undefined : "London");
   const categories = asArray(params.categories);
   const freeOnly = params.free_only === "true";
   const when = typeof params.when === "string" ? params.when : undefined;
@@ -79,7 +80,7 @@ export default async function DiscoverPage({
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 sm:py-10 sm:px-6 lg:px-8">
       <div className="mb-4 space-y-2 sm:mb-8 sm:space-y-6">
-        <SearchBar key={JSON.stringify([query, city])} defaultQuery={query ?? ""} defaultCity={city} size="sm" filters={Object.entries(params).filter(([key]) => ["when", "free_only", "categories", "sort"].includes(key)).flatMap(([key, values]) => asArray(values).map((value): [string, string] => [key, value]))} />
+        <SearchBar key={JSON.stringify([query, city])} defaultQuery={query ?? ""} defaultCity={selectedCity} size="sm" filters={Object.entries(params).filter(([key]) => ["when", "free_only", "categories", "sort"].includes(key)).flatMap(([key, values]) => asArray(values).map((value): [string, string] => [key, value]))} />
         <FilterBar />
       </div>
 
@@ -109,7 +110,7 @@ export default async function DiscoverPage({
           title="Nothing matches yet"
           description={
             query
-              ? `We couldn't find anything for “${query}” in ${city}. Try a broader term, or clear your filters.`
+              ? `We couldn't find anything for “${query}”${city ? ` in ${city}` : ""}. Try a broader term, or clear your filters.`
               : "No events in the catalogue for these filters. Run an ingestion to pull in live listings."
           }
           action={

@@ -57,7 +57,7 @@ function useTypedPlaceholder(active: boolean) {
 /** Hero search: on a discovery marketplace the search field *is* the primary CTA. */
 export function SearchBar({
   defaultQuery = "",
-  defaultCity = "London",
+  defaultCity,
   size = "lg",
   filters = [],
 }: {

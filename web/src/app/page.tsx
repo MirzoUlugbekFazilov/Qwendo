@@ -119,7 +119,7 @@ export default async function HomePage() {
             {["Spider-Man", "Hackathons", "Live music", "Networking", "Comedy"].map((term) => (
               <Link
                 key={term}
-                href={`/discover?q=${encodeURIComponent(term)}&city=London`}
+                href={`/discover?q=${encodeURIComponent(term)}`}
                 className="cursor-pointer rounded-pill border border-ink-800 bg-ink-900/60 px-3 py-1 text-mist-300 backdrop-blur transition-colors duration-200 hover:border-iris-400/60 hover:bg-iris-500/10 hover:text-iris-200"
               >
                 {term}

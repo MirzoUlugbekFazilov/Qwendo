@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import re
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from api.catalogue import LIST_COLUMNS, literal, overlap, public_filters, public_items
+from api.event_search import catalogue_query
 from api.deps import OptionalUser, get_anon_db
 from api.schemas import ClickIn, EventListOut, EventOut, InterestOut, MessageOut, StatsOut
 from api.services import fetch_interests
@@ -47,15 +47,15 @@ async def list_events(
     offset: Annotated[int, Query(ge=0, le=10_000)] = 0,
 ) -> EventListOut:
     """Browse the catalogue. Uses Postgres full-text search when `q` is present."""
-    if q:
-        # Generic listing words add a mandatory term to Postgres full-text search.
-        q = re.sub(r"\bevents?\b", " ", q, flags=re.IGNORECASE).strip() or q
+    q, conditions = catalogue_query(q or "")
     now = datetime.now(UTC)
     filters = public_filters(now)
     if starts_after and starts_after.astimezone(UTC) > now:
         filters["starts_at"] = f"gte.{starts_after.astimezone(UTC).isoformat()}"
     if starts_before:
-        filters["and"] = f"(starts_at.lte.{starts_before.astimezone(UTC).isoformat()})"
+        conditions.append(f"starts_at.lte.{starts_before.astimezone(UTC).isoformat()}")
+    if conditions:
+        filters["and"] = "(" + ",".join(conditions) + ")"
     if q:
         filters["search_tsv"] = f"wfts(english).{q}"
     if categories:
