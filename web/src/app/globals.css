@@ -81,6 +81,35 @@
     from { background-position: 0% 50%; }
     to { background-position: 100% 50%; }
   }
+
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Keyframes used from inline `animation` declarations live OUTSIDE
+   @theme. Tailwind v4 only emits keyframes from @theme when an
+   `--animate-*` variable references them, so defining them in there
+   silently drops the rule and the element never animates.
+   ─────────────────────────────────────────────────────────────── */
+
+/* Ambient drift for the hero's colour fields. Transform and opacity only —
+   both composite on the GPU, so this never triggers layout or paint. */
+@keyframes drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
+  50% { transform: translate3d(9%, 6%, 0) scale(1.22); opacity: 0.9; }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.12); opacity: 0.45; }
+  50% { transform: translate3d(-8%, -5%, 0) scale(1); opacity: 0.8; }
+}
+@keyframes drift-c {
+  0%, 100% { transform: translate3d(-4%, 3%, 0) scale(1.05); opacity: 0.4; }
+  50% { transform: translate3d(6%, -4%, 0) scale(1.25); opacity: 0.7; }
+}
+
+/* The "Live" dot: a slow halo rather than a blink, which would nag. */
+@keyframes ping-soft {
+  0% { transform: scale(1); opacity: 0.6; }
+  70%, 100% { transform: scale(2.8); opacity: 0; }
 }
 
 @layer base {
@@ -281,6 +310,18 @@
       radial-gradient(38rem 24rem at 82% 8%, rgb(16 185 129 / 0.2), transparent 64%),
       radial-gradient(30rem 20rem at 50% 100%, rgb(139 92 246 / 0.12), transparent 70%);
     pointer-events: none;
+  }
+
+  /* Soft colour fields that drift behind the hero. Each is a blurred radial
+     blob; `screen` lets them add light to the near-black background without
+     muddying it. Decorative only — never sits above content. */
+  .orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(120px);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    will-change: transform, opacity;
   }
 
   /* Film grain: kills the banding that large dark gradients produce. */

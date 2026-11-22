@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EventGrid } from "@/components/event-grid";
+import { AuroraBackdrop } from "@/components/aurora-backdrop";
 import { HeroCollage } from "@/components/hero-collage";
 import {
   ArrowRightIcon,
@@ -86,6 +87,7 @@ export default async function HomePage() {
     <>
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section className="aurora grain relative overflow-hidden border-b border-ink-850">
+        <AuroraBackdrop />
         <HeroCollage events={heroCards} />
 
         <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-28 lg:px-8">
@@ -93,7 +95,14 @@ export default async function HomePage() {
             href="/discover"
             className="animate-fade group inline-flex items-center gap-2.5 rounded-pill border border-ink-700 bg-ink-900/80 py-1.5 pl-1.5 pr-3.5 text-xs font-medium text-mist-300 backdrop-blur transition-colors duration-200 hover:border-ink-500 hover:text-mist-100"
           >
-            <span className="rounded-pill bg-iris-500/20 px-2.5 py-1 text-[0.6875rem] font-semibold text-iris-200">
+            <span className="inline-flex items-center gap-1.5 rounded-pill bg-iris-500/20 px-2.5 py-1 text-[0.6875rem] font-semibold text-iris-200">
+              <span className="relative flex h-1.5 w-1.5">
+                <span
+                  className="absolute inline-flex h-full w-full rounded-full bg-moss-400"
+                  style={{ animation: "ping-soft 2.4s cubic-bezier(0,0,0.2,1) infinite" }}
+                />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-moss-400" />
+              </span>
               Live
             </span>
             {stats.events > 0
