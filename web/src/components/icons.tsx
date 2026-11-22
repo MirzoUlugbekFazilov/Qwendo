@@ -144,6 +144,13 @@ export const GoogleMark = (props: IconProps) => (
   </svg>
 );
 
+export const RefreshIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+    <path d="M20 4v5h-5" />
+  </Icon>
+);
+
 export const MenuIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d="M4 7h16M4 12h16M4 17h16" />

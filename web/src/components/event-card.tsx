@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import { EventImage } from "@/components/event-image";
-import { ClockIcon, MapPinIcon, SparklesIcon } from "@/components/icons";
+import { CheckIcon, ClockIcon, MapPinIcon, SparklesIcon } from "@/components/icons";
+import { provenanceSummary } from "@/components/event-provenance";
 import { SaveButton } from "@/components/save-button";
 import {
   SOURCE_LABELS,
@@ -56,10 +57,16 @@ export function EventCard({
   event,
   saved = false,
   showReason = true,
+  quickSave = true,
+  actions,
 }: {
   event: QwendoEvent;
   saved?: boolean;
   showReason?: boolean;
+  /** Off where the surface has its own save control, so there is only one. */
+  quickSave?: boolean;
+  /** Row of controls pinned under the card's footer (For You, for example). */
+  actions?: React.ReactNode;
 }) {
   const badge = formatDayBadge(event.starts_at, eventZone(event));
   const match = matchPercent(event);
@@ -67,6 +74,7 @@ export function EventCard({
   const tint = CATEGORY_TINT[category] ?? "from-ink-700 to-ink-900";
   const dot = CATEGORY_DOT[category] ?? "bg-mist-500";
   const soon = calendarLabel(event.starts_at, eventZone(event));
+  const verified = event.verification_status === "verified" || !!event.last_verified_at;
 
   return (
     <article className="surface surface-hover gradient-ring group relative flex flex-col overflow-hidden rounded-card">
@@ -106,9 +114,11 @@ export function EventCard({
           </span>
         </div>
 
-        <div className="absolute right-3 top-3 z-20">
-          <SaveButton eventId={event.id} initiallySaved={saved} />
-        </div>
+        {quickSave && (
+          <div className="absolute right-3 top-3 z-20">
+            <SaveButton eventId={event.id} initiallySaved={saved} />
+          </div>
+        )}
 
         {match !== null && (
           <div className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-pill border border-iris-400/35 bg-ink-950/85 px-2.5 py-1 backdrop-blur-sm">
@@ -149,10 +159,17 @@ export function EventCard({
 
         <div className="mt-auto flex items-center justify-between border-t border-ink-800 pt-3">
           <span className="text-sm font-bold text-moss-300">{formatPrice(event)}</span>
-          <span className="text-xs text-mist-500">
+          {/* Provenance in one line; the full trail is the tooltip. */}
+          <span
+            className="inline-flex items-center gap-1 text-xs text-mist-500"
+            title={provenanceSummary(event)}
+          >
+            {verified && <CheckIcon className="h-3.5 w-3.5 text-moss-400" />}
             {SOURCE_LABELS[event.source] ?? event.source}
           </span>
         </div>
+
+        {actions && <div className="relative z-20">{actions}</div>}
       </div>
     </article>
   );

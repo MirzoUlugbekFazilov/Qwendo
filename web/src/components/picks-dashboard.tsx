@@ -5,14 +5,101 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { api } from "@/lib/api";
 import { notifications, priorityLabels } from "@/lib/discovery-profile";
-import { categoryLabel, eventZone, formatDate, formatPrice, locationLabel } from "@/lib/format";
-import { EventImage } from "./event-image";
 import { createClient } from "@/lib/supabase/client";
-import { EventProvenance } from "./event-provenance";
+import type { QwendoEvent } from "@/lib/types";
+import { EventCard } from "./event-card";
+import { BookmarkIcon, CheckIcon, CloseIcon, ExternalLinkIcon, RefreshIcon } from "./icons";
 import { TicketLink } from "./ticket-link";
 import { officialLinks, pickSections, type PicksResponse } from "./picks-model";
 
 type State = "saved" | "going" | "dismissed";
+
+const control =
+  "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60";
+const idle = "border-ink-700 bg-ink-850 text-mist-300 hover:border-ink-500 hover:text-mist-100";
+const chosen = "border-iris-400/70 bg-iris-500/15 text-iris-200";
+
+/**
+ * What you can do with a pick, in one row.
+ *
+ * Each card used to carry three pill buttons, a full-width "View Details" and
+ * a full-width outbound button — five controls competing under every event,
+ * which made the grid twice as tall as the events inside it. Details now live
+ * on the card itself (the whole card links through), so what remains is the
+ * judgement — save, interested, not for me — and the one place to book.
+ */
+function PickActions({
+  event,
+  state,
+  busy,
+  onChange,
+  onTracked,
+}: {
+  event: QwendoEvent;
+  state: State | undefined;
+  busy: boolean;
+  onChange: (state: State) => void;
+  onTracked: () => void;
+}) {
+  const saved = state === "saved";
+  const going = state === "going";
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          aria-pressed={saved}
+          disabled={busy}
+          onClick={() => onChange("saved")}
+          className={`${control} ${saved ? chosen : idle}`}
+        >
+          <BookmarkIcon className="h-3.5 w-3.5" filled={saved} />
+          {saved ? "Saved" : "Save"}
+        </button>
+
+        <button
+          type="button"
+          aria-pressed={going}
+          disabled={busy}
+          onClick={() => onChange("going")}
+          className={`${control} ${going ? chosen : idle}`}
+        >
+          <CheckIcon className="h-3.5 w-3.5" />
+          Interested
+        </button>
+
+        {/* Icon-only and last: hiding an event is the rare choice, not a peer
+            of the other two. */}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onChange("dismissed")}
+          title="Not for me"
+          aria-label={`Hide ${event.title}`}
+          className={`${control} ml-auto px-2 ${idle}`}
+        >
+          <CloseIcon className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {officialLinks(event).map((url) => (
+        <TicketLink
+          key={url}
+          eventId={event.id}
+          url={url}
+          surface="picks"
+          source={event.source}
+          onTracked={onTracked}
+          className="btn btn-ghost h-9 w-full px-3 text-xs"
+        >
+          View official page
+          <ExternalLinkIcon className="h-3.5 w-3.5" />
+        </TicketLink>
+      ))}
+    </div>
+  );
+}
 
 export function PicksDashboard({ data, now, initialStates }: {
   data: PicksResponse;
@@ -55,52 +142,49 @@ export function PicksDashboard({ data, now, initialStates }: {
   const { profile } = data;
   const radar = data.radar.filter(entry => typeof entry === "string" ||
     stateOf(String(entry.event_id ?? entry.id)) !== "dismissed").slice(0, 5);
-  return <div className="mx-auto max-w-7xl space-y-12 px-4 py-10 sm:px-6 lg:px-8">
-    <header className="flex flex-wrap items-center justify-between gap-4">
-      <h1 className="font-display text-4xl font-bold">For You</h1>
-      <button className="btn btn-ghost" disabled={refreshing} onClick={refresh}>
-        {refreshing ? "Refreshing…" : "Refresh picks"}
+  return <div className="mx-auto max-w-7xl space-y-10 px-4 py-10 sm:px-6 lg:px-8">
+    <header className="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h1 className="font-display text-3xl font-bold sm:text-4xl">For You</h1>
+        <p className="mt-1 text-sm text-mist-400">Events matched to your interests.</p>
+      </div>
+      {/* Secondary by design: the page refreshes itself after every change. */}
+      <button
+        className="btn btn-ghost h-9 gap-2 px-3.5 text-xs"
+        disabled={refreshing}
+        onClick={refresh}
+      >
+        <RefreshIcon className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+        {refreshing ? "Refreshing…" : "Refresh"}
       </button>
     </header>
-    {error && <p role="alert">{error}</p>}
+    {error && <p role="alert" className="text-sm text-mist-100">{error}</p>}
     {sections.map(section => <section key={section.title} className="space-y-4">
-      <h2 className="font-display text-2xl font-bold">{section.title}</h2>
+      <h2 className="font-display text-xl font-bold sm:text-2xl">{section.title}</h2>
       {!section.events.length && <p className="text-sm text-mist-400">{section.empty}{" "}
         {section.title === "Top Picks for You" && <Link href="/discover" className="underline">Browse events</Link>}
         {section.title === "Because You Love…" && <Link href="/settings" className="underline">Edit interests</Link>}
       </p>}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {section.events.map(event => <article key={event.id} className="surface flex flex-col gap-3 overflow-hidden rounded-card p-5">
-          {event.image_url && <div className="relative -mx-5 -mt-5 aspect-video bg-ink-900">
-            <EventImage src={event.image_url} />
-          </div>}
-          <p className="text-xs font-semibold text-iris-200">
-            {event.categories?.length ? event.categories.slice(0, 2).map(categoryLabel).join(" · ")
-              : event.is_online ? "Online event" : "In-person event"}
-          </p>
-          <EventProvenance event={event} />
-          <h3 className="font-display text-xl font-bold"><Link href={`/events/${event.id}`}>{event.title}</Link></h3>
-          <p className="text-sm text-mist-400">{formatDate(event.starts_at, eventZone(event))} · {locationLabel(event)}</p>
-          <p className="text-sm text-moss-300">{formatPrice(event)} {event.availability && `· Availability: ${event.availability}`}</p>
-          {event.reason && <p className="border-l-2 border-iris-400 pl-3 text-sm">{event.reason}</p>}
-          <div className="mt-auto flex flex-wrap gap-2 pt-2">
-            {(["saved", "going", "dismissed"] as const).map(action => <button key={action}
-              className="btn btn-ghost px-3 text-sm aria-pressed:border-iris-400 aria-pressed:text-iris-200" aria-pressed={action === "dismissed" ? undefined : stateOf(event.id) === action}
-              disabled={pending.current.has(event.id)} onClick={() => change(event.id, action)}>
-              {action === "saved" ? (stateOf(event.id) === action ? "Saved" : "Save") : action === "going" ? "Interested" : "Not for me"}
-            </button>)}
-          </div>
-          <Link className="btn btn-ghost" href={`/events/${event.id}`}>View Details</Link>
-          {officialLinks(event).map(url => <TicketLink key={url} eventId={event.id} url={url}
-            surface="picks" source={event.source} onTracked={refresh} />)}
-        </article>)}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {section.events.map(event => <EventCard
+          key={event.id}
+          event={event}
+          quickSave={false}
+          actions={<PickActions
+            event={event}
+            state={stateOf(event.id) ?? undefined}
+            busy={pending.current.has(event.id)}
+            onChange={state => change(event.id, state)}
+            onTracked={refresh}
+          />}
+        />)}
       </div>
     </section>)}
-    <section className="surface space-y-4 rounded-card p-6">
-      <h2 className="font-display text-2xl font-bold">Your Qwendo Radar</h2>
-      {profile?.radar && <p>{profile.radar}</p>}
+    <section className="surface space-y-4 rounded-card p-5 sm:p-6">
+      <h2 className="font-display text-xl font-bold sm:text-2xl">Your Qwendo Radar</h2>
+      {profile?.radar && <p className="text-sm text-mist-300">{profile.radar}</p>}
       {!radar.length && <p className="text-sm text-mist-400">No Radar alerts yet. Choose your must-see interests and updates in preferences.</p>}
-      <ul className="space-y-2">{radar.map((entry, i) => {
+      <ul className="space-y-2 text-sm">{radar.map((entry, i) => {
         if (typeof entry === "string") return <li key={i}>{entry}</li>;
         const id = entry.event_id ?? entry.id;
         const event = data.items.find(item => item.id === id);
@@ -111,15 +195,20 @@ export function PicksDashboard({ data, now, initialStates }: {
           : label}</li>;
       })}</ul>
       {profile && <>
-        <details open={profile.interests.length <= 3}><summary className="cursor-pointer font-semibold">Interest priorities ({profile.interests.length})</summary>
-        <ul>{profile.interests.map(interest => <li key={interest.name}>
-          {interest.name} · {priorityLabels[interest.priority]} · {interest.source === "explicit" ? "Added by you" : interest.confirmed ? "Confirmed by you" : "Suggested interest"}
-        </li>)}</ul></details>
-        <h3 className="font-semibold">Notification consent</h3>
-        <ul>{(Object.keys(notifications) as (keyof typeof notifications)[]).map(key =>
-          <li key={key}>{notifications[key]} · {profile.notifications[key] ? "On" : "Off"}</li>)}</ul>
+        {/* Reference material, not the main event: collapsed until asked for. */}
+        <details open={profile.interests.length <= 3} className="text-sm">
+          <summary className="cursor-pointer font-semibold">Interest priorities ({profile.interests.length})</summary>
+          <ul className="mt-2 space-y-1 text-mist-400">{profile.interests.map(interest => <li key={interest.name}>
+            {interest.name} · {priorityLabels[interest.priority]} · {interest.source === "explicit" ? "Added by you" : interest.confirmed ? "Confirmed by you" : "Suggested interest"}
+          </li>)}</ul>
+        </details>
+        <details className="text-sm">
+          <summary className="cursor-pointer font-semibold">Notification consent</summary>
+          <ul className="mt-2 space-y-1 text-mist-400">{(Object.keys(notifications) as (keyof typeof notifications)[]).map(key =>
+            <li key={key}>{notifications[key]} · {profile.notifications[key] ? "On" : "Off"}</li>)}</ul>
+        </details>
       </>}
-      <Link className="inline-flex text-iris-200 underline" href="/settings">{profile ? "Edit preferences" : "Set up your interests"}</Link>
+      <Link className="inline-flex text-sm text-iris-200 underline" href="/settings">{profile ? "Edit preferences" : "Set up your interests"}</Link>
     </section>
   </div>;
 }
