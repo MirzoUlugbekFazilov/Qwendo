@@ -79,15 +79,6 @@ export default async function HomePage() {
     6,
   );
 
-  // Counted live rather than hard-coded, so the landing page can't drift into
-  // claiming numbers that stopped being true.
-  const facts = [
-    { value: stats.events ? stats.events.toLocaleString("en-GB") : "—", label: "upcoming events tracked" },
-    { value: stats.sources || "—", label: "catalogue sources" },
-    { value: stats.interests || "—", label: "interests to match on" },
-    { value: "0", label: "booking fees — we don't sell tickets" },
-  ];
-
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────── */}
@@ -134,25 +125,6 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Facts strip grounds the promise in specifics. `relative` keeps it
-            above the collage, which is absolutely positioned across the hero. */}
-        <div className="relative border-t border-ink-800 bg-ink-950/80 backdrop-blur-sm">
-          <dl className="mx-auto grid max-w-5xl grid-cols-2 gap-px bg-ink-800/80 sm:grid-cols-4">
-            {facts.map((fact) => (
-              <div key={fact.label} className="bg-ink-950/90 px-4 py-6 text-center backdrop-blur-sm">
-                <dt className="sr-only">{fact.label}</dt>
-                <dd>
-                  <span className="font-display text-2xl font-extrabold text-mist-100">
-                    {fact.value}
-                  </span>
-                  <span className="mt-1 block text-xs leading-snug text-mist-400">
-                    {fact.label}
-                  </span>
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
       </section>
 
       {/* ── Problem ──────────────────────────────────────────── */}

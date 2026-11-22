@@ -81,7 +81,12 @@ export function SearchBar({
 }) {
   const [query, setQuery] = useState(defaultQuery);
   const [city, setCity] = useState(defaultCity);
+  const [engaged, setEngaged] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Stop animating once the field is focused or typed in: a moving placeholder
+  // under a live cursor is a distraction, not a hint.
+  const typed = useTypedPlaceholder(!engaged && !query);
 
   // "/" jumps to search from anywhere — the convention on every discovery
   // product. Ignored while the user is already typing in a field.
@@ -121,17 +126,10 @@ export function SearchBar({
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Try AI, jazz or hackathons"
-          className={`${height} w-full rounded-xl bg-transparent pl-12 pr-14 text-base text-mist-100 placeholder:text-mist-500 focus:outline-none`}
+          onFocus={() => setEngaged(true)}
+          placeholder={engaged || query ? "Search events" : `Try ${typed}`}
+          className={`${height} w-full rounded-xl bg-transparent pl-12 pr-4 text-base text-mist-100 placeholder:text-mist-500 focus:outline-none`}
         />
-        {!query && (
-          <kbd
-            className="kbd pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 sm:inline-flex"
-            aria-hidden="true"
-          >
-            /
-          </kbd>
-        )}
       </div>
 
       <div className="relative sm:w-48">

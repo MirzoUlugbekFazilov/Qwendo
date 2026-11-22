@@ -44,8 +44,7 @@ export function HeroCollage({ events }: { events: QwendoEvent[] }) {
   if (cards.length < 4) return null;
 
   return (
-    // Stops above the facts strip so cards never bleed across it.
-    <div className="absolute inset-x-0 top-0 hidden h-[calc(100%-6rem)] lg:block">
+    <div className="absolute inset-x-0 top-0 hidden h-full lg:block">
       {cards.map((event, index) => {
         const slot = SLOTS[index];
         const badge = formatDayBadge(event.starts_at, eventZone(event));
