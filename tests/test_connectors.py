@@ -35,8 +35,34 @@ class Connectors(unittest.TestCase):
         events, _ = self.run_source("jsonld", body)
         self.assertEqual([e.title for e in events], ["Trio"])
         self.assertEqual(events[0].venue_name, "Hall")
+        # Artwork hosted somewhere the source is not authorised for is ignored.
         self.assertIsNone(events[0].image_url)
         self.assertTrue(events[0].raw["source_published_at"].startswith("2027-01-01"))
+
+    def test_jsonld_artwork(self):
+        """The publisher's own event image is kept; its site furniture is not."""
+        poster = f"https://{HOST}/storage/events/abc.jpg"
+        cases = [
+            (poster, poster),                                   # plain string
+            ([f"https://{HOST}/og-image.png", poster], poster),  # default share card skipped
+            ({"@type": "ImageObject", "url": poster,
+              "license": "https://creativecommons.org/publicdomain/zero/1.0/"}, poster),
+            (f"https://{HOST}/images/site-logo.png", None),      # logo only
+            ("https://elsewhere.example/photo.jpg", None),       # off-host
+        ]
+        for image, expected in cases:
+            with self.subTest(image=image):
+                body = ('<script type="application/ld+json">'
+                        + json.dumps({**EVENT, "image": image}) + "</script>").encode()
+                events, _ = self.run_source("jsonld", body)
+                self.assertEqual(events[0].image_url, expected)
+
+        licensed = ('<script type="application/ld+json">' + json.dumps({**EVENT, "image": {
+            "url": poster, "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+        }}) + "</script>").encode()
+        events, _ = self.run_source("jsonld", licensed)
+        self.assertEqual(events[0].raw["image_license"],
+                         "https://creativecommons.org/publicdomain/zero/1.0/")
 
     def test_ical(self):
         body = (f"BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:123\nSUMMARY:Trio\n"

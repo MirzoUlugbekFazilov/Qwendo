@@ -71,22 +71,43 @@ def event_type(value):
         "http://schema.org/") in EVENT_TYPES for t in types)
 
 
+# Site furniture rather than event artwork: a publisher that has no picture for
+# this event still answers `image` with its own logo or default share card, and
+# a feed of forty identical logos is worse than no picture at all.
+GENERIC_IMAGE = re.compile(r"(?:^|/|-|_)(?:og[-_]?image|og[-_]?default|default[-_]?og|"
+                           r"placeholder|logo|banner[-_]?default)\b", re.IGNORECASE)
+
+
+def listing_image(node, row):
+    """The event's own artwork, as the publisher serves it on its own listing.
+
+    Only images the source hosts itself are taken — the allowed_hosts check is
+    the same one every other URL from a source goes through — and a licence is
+    recorded when the publisher states one.
+    """
+    value = node.get("image")
+    for item in value if isinstance(value, list) else [value]:
+        if isinstance(item, str):
+            candidate, license_url = item, None
+        else:
+            described = mapping(item)
+            candidate = described.get("contentUrl") or described.get("url")
+            license_url = described.get("license")
+        try:
+            parsed = checked_url(candidate, row["allowed_hosts"])
+        except ValueError:
+            continue
+        if GENERIC_IMAGE.search(parsed.path):
+            continue
+        return candidate, license_url if isinstance(license_url, str) else None
+    return None, None
+
+
 def schema_event(node, row, page):
     place = mapping(node.get("location"))
     address = mapping(place.get("address"))
     status = str(node.get("eventStatus", "")).rsplit("/", 1)[-1]
-    image = mapping(node.get("image"))
-    image_url = None
-    license_url = image.get("license")
-    if isinstance(license_url, str) and re.fullmatch(
-        r"https://creativecommons\.org/publicdomain/(?:zero/1\.0|mark/1\.0)/?", license_url
-    ):
-        try:
-            candidate = image.get("contentUrl") or image.get("url")
-            checked_url(candidate, row["allowed_hosts"])
-            image_url = candidate
-        except ValueError:
-            pass
+    image_url, license_url = listing_image(node, row)
     result = event(row, url=node.get("url") or page, title=node.get("name"),
                    start=instant(node.get("startDate")), reported_start=node.get("startDate"),
                    uid=node.get("identifier")
@@ -98,7 +119,7 @@ def schema_event(node, row, page):
                    description=strip_html(node.get("description")) if isinstance(node.get("description"), str) else None,
                    is_online=str(node.get("eventAttendanceMode", "")).endswith("/OnlineEventAttendanceMode"),
                    status={"EventCancelled": "cancelled", "EventPostponed": "postponed"}.get(status, "active"))
-    if result and image_url:
+    if result and image_url and license_url:
         result.raw["image_license"] = license_url
     return result
 
