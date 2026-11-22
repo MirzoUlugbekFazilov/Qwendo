@@ -117,7 +117,7 @@ export default async function HomePage() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-mist-400">
-            Qwendo finds events for you, then ranks based on your interests — while tickets
+            Qwendo finds events for you, then ranks based on your interests while tickets
             are still available.
           </p>
 
