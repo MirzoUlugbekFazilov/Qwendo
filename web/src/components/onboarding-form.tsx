@@ -135,17 +135,20 @@ export function OnboardingForm() {
         <footer>
           {review && (topicNeeded || cityNeeded) && <p role="status">{[topicNeeded && "Choose a category or add an explicit interest.", cityNeeded && "Enter your city."].filter(Boolean).join(" ")}</p>}
           {session.saveFailed && <p role="alert">Couldn’t save your profile. Your choices are here. Try saving again.</p>}
+          {/* Save state belongs beside the actions, not dangling beneath the
+              button it has nothing to do with: it reports on the draft, which
+              is saved continuously, while the button moves you on. */}
           <div className="flex flex-wrap items-center gap-3">
             {step > 1 && <button className="link" onClick={() => { go(editing ? 7 : step - 1); setEditing(false); }}>Back</button>}
+            <p className="save-state"><span role="status">{session.status}</span>
+              {session.status === "Draft could not be saved" && <button className="link" onClick={session.retryDraft}>Retry</button>}
+            </p>
             <div className="ml-auto flex flex-wrap gap-3">
               {!review && step !== 4 && !editing && <button className="link" onClick={next}>Skip for now</button>}
               <button className="btn btn-primary" disabled={review ? topicNeeded || cityNeeded : step === 4 && cityNeeded}
                 onClick={review ? session.finish : next}>{review ? (session.finishing ? "Saving…" : "Save and see my picks") :
                   editing ? "Return to review" : step === 6 ? "Review profile" : "Continue"}</button>
             </div>
-          </div>
-          <div className="mt-3 flex items-center justify-end gap-2 text-xs"><span role="status">{session.status}</span>
-            {session.status === "Draft could not be saved" && <button className="link" onClick={session.retryDraft}>Retry draft save</button>}
           </div>
         </footer>
       </fieldset>

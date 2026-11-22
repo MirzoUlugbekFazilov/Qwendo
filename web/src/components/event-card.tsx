@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { EventCover } from "@/components/event-cover";
 import { EventImage } from "@/components/event-image";
 import { CheckIcon, ClockIcon, MapPinIcon, SparklesIcon } from "@/components/icons";
 import { provenanceSummary } from "@/components/event-provenance";
@@ -16,24 +17,6 @@ import {
   matchPercent,
 } from "@/lib/format";
 import type { QwendoEvent } from "@/lib/types";
-
-/** Artwork placeholder tint per category — keeps an imageless grid from looking broken. */
-const CATEGORY_TINT: Record<string, string> = {
-  tech: "from-iris-500/40 to-ink-900",
-  business: "from-sky-500/30 to-ink-900",
-  music: "from-fuchsia-500/35 to-ink-900",
-  film: "from-rose-500/30 to-ink-900",
-  gaming: "from-moss-500/35 to-ink-900",
-  arts: "from-violet-500/30 to-ink-900",
-  comedy: "from-orange-500/30 to-ink-900",
-  sports: "from-lime-500/30 to-ink-900",
-  food: "from-amber-500/30 to-ink-900",
-  wellness: "from-teal-500/30 to-ink-900",
-  community: "from-cyan-500/30 to-ink-900",
-  nightlife: "from-purple-500/35 to-ink-900",
-  education: "from-blue-500/30 to-ink-900",
-  family: "from-pink-500/30 to-ink-900",
-};
 
 /** A single coloured dot makes a long grid scannable by category at a glance. */
 const CATEGORY_DOT: Record<string, string> = {
@@ -71,7 +54,6 @@ export function EventCard({
   const badge = formatDayBadge(event.starts_at, eventZone(event));
   const match = matchPercent(event);
   const category = event.categories?.[0] ?? "community";
-  const tint = CATEGORY_TINT[category] ?? "from-ink-700 to-ink-900";
   const dot = CATEGORY_DOT[category] ?? "bg-mist-500";
   const soon = calendarLabel(event.starts_at, eventZone(event));
   const verified = event.verification_status === "verified" || !!event.last_verified_at;
@@ -85,18 +67,14 @@ export function EventCard({
         aria-label={`View details for ${event.title}`}
       />
 
-      <div className={`relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br ${tint}`}>
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-ink-900">
         {event.image_url ? (
           <EventImage
             src={event.image_url}
             className="transition-transform duration-500 ease-out group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="grid h-full w-full place-items-center">
-            <span className="font-display text-xs font-semibold uppercase tracking-[0.22em] text-mist-400/60">
-              {categoryLabel(category)}
-            </span>
-          </div>
+          <EventCover id={event.id} category={category} />
         )}
 
         {/* Scrim keeps the date chip legible over any artwork. */}
