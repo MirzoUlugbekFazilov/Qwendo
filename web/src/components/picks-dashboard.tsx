@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { api } from "@/lib/api";
 import { notifications, priorityLabels } from "@/lib/discovery-profile";
 import { createClient } from "@/lib/supabase/client";
@@ -113,7 +113,33 @@ export function PicksDashboard({ data, now, initialStates }: {
   const pending = useRef(new Set<string>());
   const stateOf = (id: string) => id in overrides ? overrides[id] : initialStates[id];
   const sections = pickSections(data.items.filter(item => stateOf(item.id) !== "dismissed"), now);
-  const refresh = () => startRefresh(() => router.refresh());
+
+  // Refreshing usually finds nothing new — matches are recomputed from a
+  // catalogue that changes every few hours — so without a word afterwards the
+  // button looks broken. It reports what the refresh actually found.
+  const [outcome, setOutcome] = useState("");
+  const known = useRef(new Set(data.items.map(item => item.id)));
+  const asked = useRef(false);
+  const refresh = () => {
+    asked.current = true;
+    setOutcome("");
+    startRefresh(() => router.refresh());
+  };
+
+  useEffect(() => {
+    if (refreshing || !asked.current) return;
+    asked.current = false;
+    const fresh = data.items.filter(item => !known.current.has(item.id)).length;
+    known.current = new Set(data.items.map(item => item.id));
+    setOutcome(fresh ? `${fresh} new ${fresh === 1 ? "event" : "events"}` : "No new events");
+  }, [refreshing, data]);
+
+  // The result is a confirmation, not a permanent label.
+  useEffect(() => {
+    if (!outcome) return;
+    const timer = setTimeout(() => setOutcome(""), 6000);
+    return () => clearTimeout(timer);
+  }, [outcome]);
 
   async function change(id: string, state: State) {
     if (pending.current.has(id)) return;
@@ -153,14 +179,17 @@ export function PicksDashboard({ data, now, initialStates }: {
         <p className="mt-1 text-sm text-mist-400">Events matched to your interests.</p>
       </div>
       {/* Secondary by design: the page refreshes itself after every change. */}
-      <button
-        className="btn btn-ghost h-9 gap-2 px-3.5 text-xs"
-        disabled={refreshing}
-        onClick={refresh}
-      >
-        <RefreshIcon className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-        {refreshing ? "Refreshing…" : "Refresh"}
-      </button>
+      <div className="flex items-center gap-3">
+        <span role="status" aria-live="polite" className="text-xs text-mist-400">{outcome}</span>
+        <button
+          className="btn btn-ghost h-9 gap-2 px-3.5 text-xs"
+          disabled={refreshing}
+          onClick={refresh}
+        >
+          <RefreshIcon className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "Refreshing…" : "Refresh"}
+        </button>
+      </div>
     </header>
     {error && <p role="alert" className="text-sm text-mist-100">{error}</p>}
     {sections.map(section => <section key={section.title} className="space-y-4">

@@ -27,15 +27,17 @@ test("explicit offsets preserve the event's local time and day across UTC midnig
   assert.equal(formatTime("2030-07-01T18:00:00Z", "Europe/Zurich"), "20:00");
 });
 
-test("recent discoveries use discovery time and retain separate exploratory picks", () => {
+test("recent discoveries use discovery time and keep exploratory picks to their own section", () => {
   const now = Date.parse("2026-11-22T12:00:00Z");
   const older = { source_published_at: new Date(now).toISOString(), id: "older", matched_interest: "Jazz", starts_at: new Date(now).toISOString() };
   const newest = { id: "newest", exploratory: true, first_seen_at: new Date(now).toISOString() };
   const previous = { ...older, id: "previous", first_seen_at: "2026-11-18T00:00:00Z" };
   const sections = pickSections([older, previous, newest], now);
   assert.equal(sections[1].title, "Recently Discovered");
+  // "newest" matched nothing the member chose, so it appears once — under
+  // Explore Something New — rather than filling the matched sections.
   assert.deepEqual(sections.map(section => section.events.map(event => event.id)), [
-    ["older", "previous"], ["newest", "previous"], ["older", "previous"], ["newest"],
+    ["older", "previous"], ["previous"], ["older", "previous"], ["newest"],
   ]);
 });
 
@@ -59,4 +61,8 @@ test("a large catalogue keeps each dashboard section to one row of cards", () =>
   assert.equal(sections.length, 5);
   assert.ok(sections.every(section => section.events.length <= 3));
   assert.equal(sections[0].events[0].id, "0");
+  // Only the exploration section carries unmatched events.
+  for (const section of sections.slice(0, 4))
+    assert.ok(section.events.every(event => !event.exploratory), section.title);
+  assert.ok(sections[4].events.every(event => event.exploratory));
 });

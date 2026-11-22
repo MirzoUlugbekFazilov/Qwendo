@@ -24,21 +24,26 @@ export function pickSections(items: PickEvent[], now: number): PickSection[] {
     groups.set(event.matched_interest, group);
   }
   const discovered = (event: PickEvent) => Date.parse(event.first_seen_at ?? "");
-  const recent = items.filter(event => {
+  // Every section but the last one answers "what matches me?", so an event
+  // that matched neither an interest nor a chosen category belongs only in
+  // Explore Something New — which says as much on the tin. Without this the
+  // feed filled its middle with listings the member had asked nothing about.
+  const matched = items.filter(event => !event.exploratory);
+  const recent = matched.filter(event => {
     const age = now - discovered(event);
     return age >= 0 && age <= 7 * 86400000;
   }).sort((a, b) => discovered(b) - discovered(a));
   const publishedAt = (event: PickEvent) => Date.parse(event.source_published_at ?? "");
-  const announced = items.filter(event => {
+  const announced = matched.filter(event => {
     const age = now - publishedAt(event);
     return event.verification_status === "verified" && age >= 0 && age <= 7 * 86400000;
   }).sort((a, b) => publishedAt(b) - publishedAt(a));
   return [
-    { title: "Top Picks for You", events: items.filter(event => !event.exploratory).slice(0, 3),
+    { title: "Top Picks for You", events: matched.slice(0, 3),
       empty: "No upcoming events match your interests and preferences yet." },
     ...(announced.length ? [{ title: "Just Announced", events: announced.slice(0, 3), empty: "" }] : []),
     { title: "Recently Discovered", events: recent.slice(0, 3),
-      empty: "No matching listings were discovered in the past seven days." },
+      empty: "Nothing matching your interests turned up in the past seven days." },
     ...(groups.size ? Array.from(groups).slice(0, 2).map(([interest, events]) => ({
       title: `Because You Love ${interest}`, events: events.slice(0, 3), empty: "",
     })) : [{ title: "Because You Love…", events: [], empty: "Add a favourite artist, team or topic to find more specific matches." }]),
