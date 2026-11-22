@@ -49,9 +49,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // Dark is the default theme; the init script rewrites this when a member
-  // has chosen light, so the browser chrome always matches the page.
-  themeColor: "#0a0b0e",
+  // Light is the default theme; the init script rewrites this when a member
+  // has chosen dark, so the browser chrome always matches the page.
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
 };

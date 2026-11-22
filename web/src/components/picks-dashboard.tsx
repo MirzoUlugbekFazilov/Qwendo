@@ -142,27 +142,29 @@ export function PicksDashboard({ data, now, initialStates }: {
   const { profile } = data;
   const radar = data.radar.filter(entry => typeof entry === "string" ||
     stateOf(String(entry.event_id ?? entry.id)) !== "dismissed").slice(0, 5);
-  return <div className="mx-auto max-w-7xl space-y-10 px-4 py-10 sm:px-6 lg:px-8">
-    <header className="relative text-center">
-      <h1 className="font-display text-3xl font-bold sm:text-4xl">Top Picks for You</h1>
-      <p className="mt-1 text-sm text-mist-400">Events matched to your interests.</p>
-      {/* Secondary by design: the page refreshes itself after every change.
-          It sits under the title on a phone and out to the right once there
-          is room, so it never crowds the centred heading. */}
-      <div className="mt-3 flex justify-center sm:absolute sm:right-0 sm:top-0 sm:mt-0">
-        <button
-          className="btn btn-ghost h-9 gap-2 px-3.5 text-xs"
-          disabled={refreshing}
-          onClick={refresh}
-        >
-          <RefreshIcon className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-          {refreshing ? "Refreshing…" : "Refresh"}
-        </button>
+  // The page is as wide as a full row of cards (three at 22rem plus their
+  // gaps) rather than the 80rem shell: a heading stranded far to the left of
+  // the events it labels, with Refresh stranded far to the right, read as two
+  // unrelated pages.
+  return <div className="mx-auto max-w-[68rem] space-y-10 px-4 py-10 sm:px-6">
+    <header className="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h1 className="font-display text-3xl font-bold sm:text-4xl">Top Picks</h1>
+        <p className="mt-1 text-sm text-mist-400">Events matched to your interests.</p>
       </div>
+      {/* Secondary by design: the page refreshes itself after every change. */}
+      <button
+        className="btn btn-ghost h-9 gap-2 px-3.5 text-xs"
+        disabled={refreshing}
+        onClick={refresh}
+      >
+        <RefreshIcon className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+        {refreshing ? "Refreshing…" : "Refresh"}
+      </button>
     </header>
     {error && <p role="alert" className="text-sm text-mist-100">{error}</p>}
-    {sections.map(section => <section key={section.title} className="space-y-4 text-center">
-      {/* The page title already says "Top Picks for You" — repeating it
+    {sections.map(section => <section key={section.title} className="space-y-4">
+      {/* The page title already says it — repeating "Top Picks for You"
           immediately underneath would read as a glitch. */}
       {section.title !== "Top Picks for You" &&
         <h2 className="font-display text-xl font-bold sm:text-2xl">{section.title}</h2>}
@@ -173,7 +175,7 @@ export function PicksDashboard({ data, now, initialStates }: {
       {/* Sections hold at most three events, so a four-column grid always left
           a hole on a wide screen. Wrapping and centring keeps a short row
           balanced under its heading, whatever the count. */}
-      <div className="flex flex-wrap justify-center gap-4 text-left">
+      <div className="flex flex-wrap justify-center gap-4">
         {section.events.map(event => <div
           key={event.id}
           className="grid w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.667rem)] lg:max-w-[22rem]"

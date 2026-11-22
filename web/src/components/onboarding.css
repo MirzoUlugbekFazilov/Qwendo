@@ -1,7 +1,7 @@
 /* Theme-aware surfaces for the wizard chrome. The sidebar is the one place
    with its own gradient, so it gets a token rather than a baked-in colour. */
-:root { --wizard-aside: linear-gradient(145deg, #282438, #171920 80%); }
-:root[data-theme="light"] { --wizard-aside: linear-gradient(145deg, #ece9f6, #f4f6f9 80%); }
+:root { --wizard-aside: linear-gradient(145deg, #ece9f6, #f4f6f9 80%); }
+:root[data-theme="dark"] { --wizard-aside: linear-gradient(145deg, #282438, #171920 80%); }
 
 .wizard { color: var(--color-mist-100); }
 .wizard-frame { display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--color-ink-600); border-radius: 1.4rem; overflow: hidden; background: var(--color-ink-875); }
@@ -29,9 +29,26 @@
 .wizard .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); gap: .55rem; }
 .wizard .choice, .wizard .btn-secondary { display: flex; align-items: center; gap: .65rem; min-height: 2.8rem; padding: .6rem .85rem; text-align: left; border: 1px solid var(--color-ink-600); border-radius: .75rem; background: var(--color-ink-850); font-size: .9rem; }
 .wizard .choice[aria-pressed=true] { background: color-mix(in oklab, var(--color-iris-500) 18%, var(--color-ink-850)); border-color: var(--color-iris-400); color: var(--color-iris-200); }
-.wizard button:hover:enabled { filter: brightness(1.15); }
 .wizard :is(button,input,textarea,select):focus-visible { outline: 2px solid var(--color-iris-300); outline-offset: 2px; }
 .wizard .link { color: var(--color-iris-200); text-decoration: underline; text-underline-offset: .25em; padding: .5rem .2rem; font-size: .9rem; }
+
+/* ── controls ──────────────────────────────────────────────────────
+   The footer used to pair an underlined purple "Skip for now" with a
+   solid black "Continue" whose label touched its own edges: .btn
+   carries no padding of its own, and every other caller supplies it
+   with utilities the wizard never had. Both are fixed here so the two
+   actions read as a pair — one quiet, one committed. */
+.wizard .btn { height: 2.75rem; padding: 0 1.35rem; border-radius: .8rem; font-size: .9rem; }
+.wizard footer .link { display: inline-flex; align-items: center; height: 2.75rem; padding: 0 1rem; border-radius: .8rem; color: var(--color-mist-400); font-weight: 600; text-decoration: none; transition: background-color 160ms ease, color 160ms ease; }
+.wizard footer .link:hover:enabled { background: var(--color-ink-800); color: var(--color-mist-100); }
+
+/* The +/✓ in front of a category becomes a real selection indicator
+   rather than a loose character sitting next to the label. */
+.wizard .choice > span[aria-hidden] { display: inline-grid; flex: none; place-items: center; width: 1.35rem; height: 1.35rem; border: 1px solid var(--color-ink-500); border-radius: 999px; color: var(--color-mist-400); font-size: .7rem; line-height: 1; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+.wizard .choice[aria-pressed=true] > span[aria-hidden] { background: var(--color-iris-500); border-color: transparent; color: #fff; }
+.wizard .choice:hover:enabled { border-color: var(--color-ink-500); background: var(--color-ink-800); }
+.wizard .choice[aria-pressed=true]:hover:enabled { border-color: var(--color-iris-400); background: color-mix(in oklab, var(--color-iris-500) 24%, var(--color-ink-850)); }
+.wizard .btn-secondary:hover:enabled { border-color: var(--color-ink-500); background: var(--color-ink-800); }
 .wizard .interest { padding: 1rem; border: 1px solid var(--color-ink-600); border-radius: .75rem; }
 .wizard .interest legend { padding: 0 .35rem; color: var(--color-iris-200); }
 .wizard .review-row { border-bottom: 1px solid var(--color-ink-700); padding: .75rem 0; }

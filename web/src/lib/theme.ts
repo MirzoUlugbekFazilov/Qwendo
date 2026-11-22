@@ -28,13 +28,13 @@ export function isThemePreference(value: unknown): value is ThemePreference {
 }
 
 /**
- * Dark, not "system".
+ * Light, not "system".
  *
- * Qwendo shipped as a dark product, so following the device would silently
- * restyle the app for every member on a light desktop who never asked for it.
- * Light is opt-in; "System" is there for anyone who wants it.
+ * Qwendo's default look is the light one, and a fixed default means every
+ * member sees the same product until they say otherwise. Dark and "System"
+ * are one click away in Settings.
  */
-export const DEFAULT_THEME: ThemePreference = "dark";
+export const DEFAULT_THEME: ThemePreference = "light";
 
 export function readThemePreference(): ThemePreference {
   try {
@@ -81,4 +81,4 @@ export function setThemePreference(preference: ThemePreference) {
  * Deliberately terse and dependency-free: it is inlined into every HTML
  * response, and anything it throws must never break the page.
  */
-export const themeInitScript = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var p=localStorage.getItem(k);if(p!=="light"&&p!=="dark"&&p!=="system")p="dark";var t=p==="system"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;var r=document.documentElement;r.dataset.theme=t;r.style.colorScheme=t;var c=t==="light"?"#ffffff":"#0a0b0e";var s=function(){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",c);};s();document.addEventListener("DOMContentLoaded",s);}catch(e){}})();`;
+export const themeInitScript = `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var p=localStorage.getItem(k);if(p!=="light"&&p!=="dark"&&p!=="system")p="light";var t=p==="system"?(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;var r=document.documentElement;r.dataset.theme=t;r.style.colorScheme=t;var c=t==="light"?"#ffffff":"#0a0b0e";var s=function(){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",c);};s();document.addEventListener("DOMContentLoaded",s);}catch(e){}})();`;

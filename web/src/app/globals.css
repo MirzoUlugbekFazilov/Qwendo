@@ -14,39 +14,41 @@
    always does something, a purple one always says something about you.
    ═══════════════════════════════════════════════════════════════ */
 @theme {
-  /* ── neutrals: cool gray, near-black base ─────────────────
-     Deeper floor and brighter borders than before: dark UIs fail by
-     collapsing into one flat tone, so each step is a visible step. */
-  --color-ink-950: #08090c;
-  --color-ink-900: #0d0f13;
-  --color-ink-875: #11141a;
-  --color-ink-850: #161a21;
-  --color-ink-800: #1f242c;
-  --color-ink-700: #2b313b;
-  --color-ink-600: #39414d;
-  --color-ink-500: #4b5461;
+  /* ── neutrals: white page, cool gray steps upward ─────────
+     `ink` is always the surface family and `mist` always the text
+     family. Because the scales are semantic rather than literal, the
+     dark theme is the same utilities with both ramps inverted — no
+     component owns a second set of classes. */
+  --color-ink-950: #ffffff;
+  --color-ink-900: #f7f8fb;
+  --color-ink-875: #f2f4f8;
+  --color-ink-850: #edf0f5;
+  --color-ink-800: #e3e8ef;
+  --color-ink-700: #d3dae4;
+  --color-ink-600: #bac3d0;
+  --color-ink-500: #98a3b2;
 
-  --color-mist-600: #646d7b;
-  --color-mist-500: #7b8594;
-  --color-mist-400: #9aa4b2;
-  --color-mist-300: #c3cad4;
-  --color-mist-200: #dde2e9;
-  --color-mist-100: #eff2f6;
+  --color-mist-600: #78828f;
+  --color-mist-500: #697382;
+  --color-mist-400: #58616f;
+  --color-mist-300: #3a4350;
+  --color-mist-200: #222935;
+  --color-mist-100: #0f131a;
 
   /* ── iris: intelligence ─────────────────────────────────── */
-  --color-iris-200: #ddd6fe;
-  --color-iris-300: #c4b5fd;
-  --color-iris-400: #a78bfa;
-  --color-iris-500: #8b5cf6;
-  --color-iris-600: #7c3aed;
-  --color-iris-700: #6d28d9;
+  --color-iris-200: #5b21b6;
+  --color-iris-300: #6d28d9;
+  --color-iris-400: #7c3aed;
+  --color-iris-500: #6d28d9;
+  --color-iris-600: #5b21b6;
+  --color-iris-700: #4c1d95;
 
   /* ── moss: action ───────────────────────────────────────── */
-  --color-moss-200: #a7f3d0;
-  --color-moss-300: #6ee7b7;
-  --color-moss-400: #34d399;
-  --color-moss-500: #10b981;
-  --color-moss-600: #059669;
+  --color-moss-200: #065f46;
+  --color-moss-300: #047857;
+  --color-moss-400: #047857;
+  --color-moss-500: #059669;
+  --color-moss-600: #047857;
 
   --font-display: var(--font-display-sans), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-body-sans), ui-sans-serif, system-ui, sans-serif;
@@ -114,69 +116,62 @@
 
 @layer base {
   :root {
-    color-scheme: dark;
-
-    /* Brand mark: purple through sky to mint, plus the glass glint. */
-    --logo-from: #a78bfa;
-    --logo-via: #6cc0e5;
-    --logo-to: #34d399;
-    --logo-glint: #ffffff;
-  }
-
-  /* ═══════════════════════════════════════════════════════════════
-     Light theme
-
-     The scales are semantic, not literal: `ink` is always the surface
-     family and `mist` is always the text family. Inverting the two
-     ramps here gives every existing utility its light equivalent —
-     `bg-ink-850` stays "the card", `text-mist-400` stays "secondary
-     text" — so no component needs a second set of classes.
-
-     Accents move rather than invert: iris and moss are chosen for
-     contrast against the page they sit on, so they darken on white.
-     ═══════════════════════════════════════════════════════════════ */
-  :root[data-theme="light"] {
     color-scheme: light;
 
-    /* The pastel mark disappears on white, so each stop deepens a step and
-       the glint becomes a lavender tint rather than invisible white. */
+    /* Brand mark: purple through sky to mint, plus the glass glint. The
+       pastel stops vanish on white, so the light theme carries the
+       deeper ones and the glint is a lavender tint. */
     --logo-from: #7c3aed;
     --logo-via: #3f9fd8;
     --logo-to: #10b981;
     --logo-glint: #ddd3fb;
+  }
 
-    /* surfaces: white page, cool gray steps upward */
-    --color-ink-950: #ffffff;
-    --color-ink-900: #f7f8fb;
-    --color-ink-875: #f2f4f8;
-    --color-ink-850: #edf0f5;
-    --color-ink-800: #e3e8ef;
-    --color-ink-700: #d3dae4;
-    --color-ink-600: #bac3d0;
-    --color-ink-500: #98a3b2;
+  /* ═══════════════════════════════════════════════════════════════
+     Dark theme
 
-    /* text: darkest is mist-100, matching the dark theme's brightest */
-    --color-mist-600: #78828f;
-    --color-mist-500: #697382;
-    --color-mist-400: #58616f;
-    --color-mist-300: #3a4350;
-    --color-mist-200: #222935;
-    --color-mist-100: #0f131a;
+     The original Qwendo look, now an override rather than the base:
+     both neutral ramps invert, and the accents brighten because they
+     sit on near-black instead of white.
+     ═══════════════════════════════════════════════════════════════ */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
 
-    /* iris: readable purple on white, still vivid as a fill */
-    --color-iris-200: #5b21b6;
-    --color-iris-300: #6d28d9;
-    --color-iris-400: #7c3aed;
-    --color-iris-500: #6d28d9;
-    --color-iris-600: #5b21b6;
-    --color-iris-700: #4c1d95;
+    --logo-from: #a78bfa;
+    --logo-via: #6cc0e5;
+    --logo-to: #34d399;
+    --logo-glint: #ffffff;
 
-    /* moss: the bright mints disappear on white, so they deepen */
-    --color-moss-200: #065f46;
-    --color-moss-300: #047857;
-    --color-moss-400: #047857;
-    --color-moss-500: #059669;
-    --color-moss-600: #047857;
+    /* surfaces: cool gray, near-black base. Each step is a visible
+       step — dark UIs fail by collapsing into one flat tone. */
+    --color-ink-950: #08090c;
+    --color-ink-900: #0d0f13;
+    --color-ink-875: #11141a;
+    --color-ink-850: #161a21;
+    --color-ink-800: #1f242c;
+    --color-ink-700: #2b313b;
+    --color-ink-600: #39414d;
+    --color-ink-500: #4b5461;
+
+    --color-mist-600: #646d7b;
+    --color-mist-500: #7b8594;
+    --color-mist-400: #9aa4b2;
+    --color-mist-300: #c3cad4;
+    --color-mist-200: #dde2e9;
+    --color-mist-100: #eff2f6;
+
+    --color-iris-200: #ddd6fe;
+    --color-iris-300: #c4b5fd;
+    --color-iris-400: #a78bfa;
+    --color-iris-500: #8b5cf6;
+    --color-iris-600: #7c3aed;
+    --color-iris-700: #6d28d9;
+
+    --color-moss-200: #a7f3d0;
+    --color-moss-300: #6ee7b7;
+    --color-moss-400: #34d399;
+    --color-moss-500: #10b981;
+    --color-moss-600: #059669;
   }
 
   html {
@@ -236,10 +231,10 @@
   }
 
   .glass {
-    background: color-mix(in oklab, var(--color-ink-900) 72%, transparent);
+    background: color-mix(in oklab, var(--color-ink-950) 78%, transparent);
     backdrop-filter: blur(16px) saturate(140%);
     -webkit-backdrop-filter: blur(16px) saturate(140%);
-    border: 1px solid color-mix(in oklab, var(--color-mist-100) 8%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-mist-100) 12%, transparent);
   }
 
   /* Hover that changes colour and shadow only — never geometry that
@@ -254,7 +249,7 @@
   .surface-hover:hover {
     border-color: var(--color-ink-600);
     background-color: color-mix(in oklab, var(--color-ink-800) 90%, transparent);
-    box-shadow: 0 18px 40px -24px rgb(0 0 0 / 0.9);
+    box-shadow: 0 18px 40px -26px rgb(15 19 26 / 0.45);
     transform: translateY(-2px);
   }
 
@@ -281,18 +276,19 @@
     opacity: 0.55;
   }
 
-  /* Primary action: solid white on near-black.
+  /* Primary action: the ink colour on the page colour — near-black on
+     white, white on near-black.
      The highest-contrast element on the page should be the thing you want
-     people to press. A coloured gradient competes with the content; white
+     people to press. A coloured gradient competes with the content; this
      simply wins, which is why Linear, Vercel and Liveblocks all land here. */
   .btn-primary {
     background-color: var(--color-mist-100);
     color: var(--color-ink-950);
-    box-shadow: 0 10px 30px -16px rgb(255 255 255 / 0.5);
+    box-shadow: 0 10px 24px -14px rgb(15 19 26 / 0.5);
   }
   .btn-primary:hover:not(:disabled) {
-    background-color: #fff;
-    box-shadow: 0 14px 34px -14px rgb(255 255 255 / 0.35);
+    background-color: var(--color-mist-200);
+    box-shadow: 0 12px 28px -12px rgb(15 19 26 / 0.4);
   }
 
   /* Purple = this is about you / the AI. */
@@ -368,9 +364,9 @@
     height: 130%;
     z-index: -1;
     background:
-      radial-gradient(42rem 26rem at 18% 0%, rgb(124 58 237 / 0.28), transparent 62%),
-      radial-gradient(38rem 24rem at 82% 8%, rgb(16 185 129 / 0.2), transparent 64%),
-      radial-gradient(30rem 20rem at 50% 100%, rgb(139 92 246 / 0.12), transparent 70%);
+      radial-gradient(42rem 26rem at 18% 0%, rgb(124 58 237 / 0.14), transparent 62%),
+      radial-gradient(38rem 24rem at 82% 8%, rgb(16 185 129 / 0.12), transparent 64%),
+      radial-gradient(30rem 20rem at 50% 100%, rgb(139 92 246 / 0.08), transparent 70%);
     pointer-events: none;
   }
 
@@ -381,7 +377,10 @@
     position: absolute;
     border-radius: 9999px;
     filter: blur(120px);
-    mix-blend-mode: screen;
+    /* `multiply` tints a white page; `screen` (dark theme) adds light to a
+       near-black one. The wrong one of the two is simply invisible. */
+    mix-blend-mode: multiply;
+    opacity: 0.55;
     pointer-events: none;
     will-change: transform, opacity;
   }
@@ -392,7 +391,7 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    opacity: 0.22;
+    opacity: 0.06;
     pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
   }
@@ -477,14 +476,16 @@
   .image-scrim {
     background-image: linear-gradient(
       to bottom,
-      color-mix(in oklab, var(--color-ink-950) 85%, transparent),
+      color-mix(in oklab, var(--color-ink-950) 55%, transparent),
       transparent
     );
   }
 
   /* Panels that float above the page: menus, popovers. */
   .elevated {
-    box-shadow: 0 24px 60px -28px rgb(0 0 0 / 0.9);
+    box-shadow:
+      0 18px 44px -24px rgb(15 19 26 / 0.3),
+      0 2px 8px -4px rgb(15 19 26 / 0.12);
   }
 
   /* The home collage fades into the page behind it. */
@@ -516,62 +517,62 @@
 }
 
 /* ───────────────────────────────────────────────────────────────
-   Light-theme corrections
+   Dark-theme corrections
 
    Tokens carry almost everything, but a few rules bake in the
-   assumption of a near-black page: white glows, heavy black shadows
-   and `screen` blending all vanish or turn muddy on white. These
-   stay in the components layer so they keep losing to utilities the
-   same way the originals do.
+   assumption of a white page: soft black shadows, `multiply`
+   blending and a faint film grain all disappear or turn muddy on
+   near-black. These stay in the components layer so they keep losing
+   to utilities the same way the originals do.
    ─────────────────────────────────────────────────────────────── */
 @layer components {
-  :root[data-theme="light"] .btn-primary {
-    box-shadow: 0 10px 24px -14px rgb(15 19 26 / 0.5);
+  :root[data-theme="dark"] .btn-primary {
+    box-shadow: 0 10px 30px -16px rgb(255 255 255 / 0.5);
   }
-  :root[data-theme="light"] .btn-primary:hover:not(:disabled) {
-    background-color: var(--color-mist-200);
-    box-shadow: 0 12px 28px -12px rgb(15 19 26 / 0.4);
-  }
-
-  :root[data-theme="light"] .surface-hover:hover {
-    box-shadow: 0 18px 40px -26px rgb(15 19 26 / 0.45);
+  :root[data-theme="dark"] .btn-primary:hover:not(:disabled) {
+    background-color: #fff;
+    box-shadow: 0 14px 34px -14px rgb(255 255 255 / 0.35);
   }
 
-  :root[data-theme="light"] .elevated {
-    box-shadow:
-      0 18px 44px -24px rgb(15 19 26 / 0.3),
-      0 2px 8px -4px rgb(15 19 26 / 0.12);
+  :root[data-theme="dark"] .surface-hover:hover {
+    box-shadow: 0 18px 40px -24px rgb(0 0 0 / 0.9);
   }
 
-  :root[data-theme="light"] .image-scrim {
+  :root[data-theme="dark"] .elevated {
+    box-shadow: 0 24px 60px -28px rgb(0 0 0 / 0.9);
+  }
+
+  :root[data-theme="dark"] .glass {
+    background: color-mix(in oklab, var(--color-ink-900) 72%, transparent);
+    border-color: color-mix(in oklab, var(--color-mist-100) 8%, transparent);
+  }
+
+  /* Adding light, rather than tinting, over near-black. */
+  :root[data-theme="dark"] .orb {
+    mix-blend-mode: screen;
+    opacity: 1;
+  }
+
+  :root[data-theme="dark"] .aurora::before {
+    background:
+      radial-gradient(42rem 26rem at 18% 0%, rgb(124 58 237 / 0.28), transparent 62%),
+      radial-gradient(38rem 24rem at 82% 8%, rgb(16 185 129 / 0.2), transparent 64%),
+      radial-gradient(30rem 20rem at 50% 100%, rgb(139 92 246 / 0.12), transparent 70%);
+  }
+
+  /* Large dark gradients band without it. */
+  :root[data-theme="dark"] .grain::after {
+    opacity: 0.22;
+  }
+
+  /* A dark scrim quietly deepens artwork; the light one has to stay thin
+     or it hazes the image instead. */
+  :root[data-theme="dark"] .image-scrim {
     background-image: linear-gradient(
       to bottom,
-      color-mix(in oklab, var(--color-ink-950) 55%, transparent),
+      color-mix(in oklab, var(--color-ink-950) 85%, transparent),
       transparent
     );
-  }
-
-  :root[data-theme="light"] .glass {
-    background: color-mix(in oklab, var(--color-ink-950) 78%, transparent);
-    border-color: color-mix(in oklab, var(--color-mist-100) 12%, transparent);
-  }
-
-  /* `screen` adds light, which does nothing on white — `multiply` tints it. */
-  :root[data-theme="light"] .orb {
-    mix-blend-mode: multiply;
-    opacity: 0.55;
-  }
-
-  :root[data-theme="light"] .aurora::before {
-    background:
-      radial-gradient(42rem 26rem at 18% 0%, rgb(124 58 237 / 0.14), transparent 62%),
-      radial-gradient(38rem 24rem at 82% 8%, rgb(16 185 129 / 0.12), transparent 64%),
-      radial-gradient(30rem 20rem at 50% 100%, rgb(139 92 246 / 0.08), transparent 70%);
-  }
-
-  /* Dark noise reads as dirt on a white page — barely there is enough. */
-  :root[data-theme="light"] .grain::after {
-    opacity: 0.06;
   }
 }
 

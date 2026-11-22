@@ -24,7 +24,7 @@ import {
  */
 export function useTheme() {
   const [preference, setPreference] = useState<ThemePreference>(DEFAULT_THEME);
-  const [resolved, setResolved] = useState<ResolvedTheme>("dark");
+  const [resolved, setResolved] = useState<ResolvedTheme>("light");
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
