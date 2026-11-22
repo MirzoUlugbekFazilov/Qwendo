@@ -94,8 +94,15 @@ export function TastePreview({ interests, city = "London" }: { interests: Intere
 
       <div className="space-y-4">
         {results === null && !loading && (
-          <div className="surface grid h-full min-h-72 place-items-center rounded-card p-8 text-center">
-            <div className="space-y-2">
+          <div className="surface relative grid h-full min-h-72 place-items-center overflow-hidden rounded-card bg-gradient-to-br from-ink-850 via-ink-875 to-ink-900 p-8 text-center">
+            {/* A large empty panel reads as a dead slab; a slow wash gives it life
+                while it waits for the user's first pick. */}
+            <span
+              className="orb pointer-events-none -right-[20%] -top-[30%] h-[22rem] w-[28rem] bg-iris-500/14"
+              style={{ animation: "drift-b 40s ease-in-out infinite" }}
+              aria-hidden="true"
+            />
+            <div className="relative space-y-2">
               <SparklesIcon className="mx-auto h-8 w-8 text-iris-300" />
               <p className="font-display text-lg font-semibold text-mist-100">
                 Your matches appear here

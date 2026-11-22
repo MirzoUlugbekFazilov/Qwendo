@@ -191,8 +191,12 @@ export default async function HomePage() {
       </section>
 
       {/* ── Live demo ────────────────────────────────────────── */}
-      <section id="matching-demo" className="reveal relative scroll-mt-16 border-y border-ink-850 bg-ink-900/50">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <section
+        id="matching-demo"
+        className="reveal relative scroll-mt-16 overflow-hidden border-y border-ink-800 bg-gradient-to-b from-ink-850 via-ink-875 to-ink-900"
+      >
+        <AuroraBackdrop variant="section" />
+        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="mb-10 max-w-2xl">
             <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
               Try it right now. <span className="text-iris-300">No account.</span>
@@ -280,8 +284,9 @@ export default async function HomePage() {
 
       {/* ── CTA ──────────────────────────────────────────────── */}
       <section className="reveal mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-        <div className="aurora grain surface relative overflow-hidden rounded-card px-6 py-16 text-center sm:px-12">
-          <h2 className="font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
+        <div className="grain surface relative overflow-hidden rounded-card px-6 py-16 text-center sm:px-12">
+          <AuroraBackdrop variant="section" />
+          <h2 className="relative font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
             Your next favourite night is{" "}
             <span className="text-gradient">already on sale</span>
           </h2>
