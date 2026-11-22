@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { ArrowRightIcon, GoogleMark } from "@/components/icons";
-import { authDestination } from "@/lib/auth-destination";
+import { authDestination, signedInDestination } from "@/lib/auth-destination";
 import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
@@ -82,10 +82,7 @@ export function LoginForm() {
       } else {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
-        const { data: profile, error: readError } = await supabase.from("profiles")
-          .select("onboarded").eq("id", data.user.id).maybeSingle();
-        if (readError) throw readError;
-        router.push(profile?.onboarded ? next : "/onboarding");
+        router.push(await signedInDestination(supabase, data.user.id, next));
       }
       router.refresh();
     } catch (caught) {

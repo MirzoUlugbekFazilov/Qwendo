@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAccessToken } from "@/lib/supabase/server";
-import { getDiscovery } from "@/components/picks-api";
+import { createClient } from "@/lib/supabase/server";
+import { signedInDestination } from "@/lib/auth-destination";
 
 import { EventGrid } from "@/components/event-grid";
 import { AuroraBackdrop } from "@/components/aurora-backdrop";
@@ -58,8 +58,12 @@ const STEPS = [
 ];
 
 export default async function HomePage() {
-  const token = await getAccessToken();
-  if (token && (await safe(getDiscovery(token), null))?.profile) redirect("/picks");
+  // This page is the signed-out pitch. Anyone with a session belongs on their
+  // own feed, or in onboarding if they have yet to confirm a profile.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) redirect(await signedInDestination(supabase, user.id));
+
   const [interests, trending, heroEvents, stats] = await Promise.all([
     safe(api.interests(), []),
     // Over-fetch: the hero claims six of these, and showing the same event

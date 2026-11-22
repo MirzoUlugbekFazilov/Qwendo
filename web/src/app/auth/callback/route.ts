@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { authDestination } from "@/lib/auth-destination";
+import { signedInDestination } from "@/lib/auth-destination";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const origin = publicOrigin(request);
   const code = searchParams.get("code");
-  const next = authDestination(searchParams.get("next"));
+  const next = searchParams.get("next");
 
   // The provider itself can reject the attempt (user cancelled, app not
   // configured, consent withdrawn) — it reports that here, not via `code`.
@@ -57,12 +57,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(back);
   }
 
-  // Straight to onboarding until there's a taste profile to recommend against.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("onboarded")
-    .eq("id", data.user.id)
-    .maybeSingle();
-
-  return NextResponse.redirect(new URL(profile?.onboarded ? next : "/onboarding", origin));
+  // Straight to onboarding until there's a confirmed profile to rank against.
+  const destination = await signedInDestination(supabase, data.user.id, next);
+  return NextResponse.redirect(new URL(destination, origin));
 }
