@@ -2,20 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { MapPinIcon, SearchIcon } from "@/components/icons";
-
-const CITIES = [
-  "London",
-  "Manchester",
-  "Birmingham",
-  "Edinburgh",
-  "New York",
-  "San Francisco",
-  "Berlin",
-  "Paris",
-  "Dubai",
-  "Tashkent",
-];
+import { SearchIcon } from "@/components/icons";
 
 /** Cycled through the placeholder, one character at a time. */
 const SUGGESTIONS = ["hackathons", "networking events", "concerts"];
@@ -80,7 +67,6 @@ export function SearchBar({
   size?: "lg" | "sm";
 }) {
   const [query, setQuery] = useState(defaultQuery);
-  const [city, setCity] = useState(defaultCity);
   const [engaged, setEngaged] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -132,25 +118,10 @@ export function SearchBar({
         />
       </div>
 
-      <div className="relative sm:w-48">
-        <MapPinIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-mist-500" />
-        <label htmlFor="search-city" className="sr-only">
-          City
-        </label>
-        <select
-          id="search-city"
-          name="city"
-          value={city}
-          onChange={(event) => setCity(event.target.value)}
-          className={`${height} w-full cursor-pointer appearance-none rounded-xl border border-ink-700 bg-ink-850 pl-12 pr-4 text-sm font-medium text-mist-200 transition-colors duration-200 hover:border-ink-500 focus:outline-none`}
-        >
-          {CITIES.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* The city picker is gone from the UI, but the value still travels with
+          the search so re-searching from /discover doesn't silently drop the
+          city you were browsing. */}
+      {defaultCity && <input type="hidden" name="city" value={defaultCity} />}
 
       <button type="submit" className={`btn btn-primary ${height} px-7 text-[0.9375rem]`}>
         Search

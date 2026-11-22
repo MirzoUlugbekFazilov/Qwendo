@@ -108,7 +108,6 @@ export default async function HomePage() {
 
           <div className="mx-auto mt-10 max-w-3xl">
             <SearchBar />
-            <a href="#matching-demo" className="mt-3 inline-block py-2 text-sm font-semibold text-iris-300 underline">Try my recommendations</a>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm text-mist-500">
