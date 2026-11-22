@@ -72,6 +72,7 @@ export function EventCard({
           <EventImage
             src={event.image_url}
             className="transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+            fallback={<EventCover id={event.id} category={category} />}
           />
         ) : (
           <EventCover id={event.id} category={category} />
