@@ -133,7 +133,7 @@ export default async function EventPage({ params }: Props) {
               <h2 className="font-display text-lg font-semibold">Why this is in your picks</h2>
               {match.reason && <p>{match.reason}</p>}
               {match.matched_interest && <p className="text-sm text-mist-400">Matched interest · {match.matched_interest}</p>}
-              <Link href="/picks" className="text-sm text-iris-200 underline">View your picks</Link>
+              <Link href="/picks" className="text-sm text-iris-200 underline">View your For You feed</Link>
             </section>
           )}
 

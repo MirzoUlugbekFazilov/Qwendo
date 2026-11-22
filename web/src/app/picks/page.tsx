@@ -5,7 +5,7 @@ import { ApiError } from "@/lib/api";
 import { getPicks, getPickState } from "@/components/picks-api";
 import { PicksDashboard } from "@/components/picks-dashboard";
 
-export const metadata = { title: "Your picks" };
+export const metadata = { title: "For You" };
 
 export default async function PicksPage() {
   const token = await getAccessToken();

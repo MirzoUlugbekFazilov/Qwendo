@@ -91,7 +91,7 @@ export function HeroCollage({ events }: { events: QwendoEvent[] }) {
 
       {/* Keeps the centre dark so headline contrast never drops, and fades the
           composition out towards every edge. */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_56%_at_50%_44%,rgb(8_9_12/0.95)_28%,rgb(8_9_12/0.58)_56%,transparent_100%)]" />
+      <div className="collage-vignette pointer-events-none absolute inset-0" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink-950 to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-ink-950 to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-ink-950 to-transparent" />

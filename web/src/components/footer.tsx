@@ -4,7 +4,7 @@ import { Logo } from "@/components/logo";
 
 export function Footer() {
   return (
-    <footer className="mt-24 border-t border-ink-850 bg-ink-950">
+    <footer className="mt-24 border-t border-ink-800 bg-ink-950">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.5fr_1fr] lg:px-8">
         <div className="space-y-4">
           <Logo />
@@ -39,7 +39,7 @@ export function Footer() {
 
       </div>
 
-      <div className="border-t border-ink-850">
+      <div className="border-t border-ink-800">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-mist-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p>© {new Date().getFullYear()} Qwendo. Tickets are sold by the original organisers.</p>
 

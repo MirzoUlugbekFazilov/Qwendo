@@ -57,7 +57,7 @@ export function PicksDashboard({ data, now, initialStates }: {
     stateOf(String(entry.event_id ?? entry.id)) !== "dismissed").slice(0, 5);
   return <div className="mx-auto max-w-7xl space-y-12 px-4 py-10 sm:px-6 lg:px-8">
     <header className="flex flex-wrap items-center justify-between gap-4">
-      <h1 className="font-display text-4xl font-bold">Your picks</h1>
+      <h1 className="font-display text-4xl font-bold">For You</h1>
       <button className="btn btn-ghost" disabled={refreshing} onClick={refresh}>
         {refreshing ? "Refreshing…" : "Refresh picks"}
       </button>
@@ -67,7 +67,7 @@ export function PicksDashboard({ data, now, initialStates }: {
       <h2 className="font-display text-2xl font-bold">{section.title}</h2>
       {!section.events.length && <p className="text-sm text-mist-400">{section.empty}{" "}
         {section.title === "Top Picks for You" && <Link href="/discover" className="underline">Browse events</Link>}
-        {section.title === "Because You Love…" && <Link href="/onboarding" className="underline">Edit interests</Link>}
+        {section.title === "Because You Love…" && <Link href="/settings" className="underline">Edit interests</Link>}
       </p>}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {section.events.map(event => <article key={event.id} className="surface flex flex-col gap-3 overflow-hidden rounded-card p-5">
@@ -119,7 +119,7 @@ export function PicksDashboard({ data, now, initialStates }: {
         <ul>{(Object.keys(notifications) as (keyof typeof notifications)[]).map(key =>
           <li key={key}>{notifications[key]} · {profile.notifications[key] ? "On" : "Off"}</li>)}</ul>
       </>}
-      <Link className="inline-flex text-iris-200 underline" href="/onboarding">{profile ? "Edit preferences" : "Set up your interests"}</Link>
+      <Link className="inline-flex text-iris-200 underline" href="/settings">{profile ? "Edit preferences" : "Set up your interests"}</Link>
     </section>
   </div>;
 }

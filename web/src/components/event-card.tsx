@@ -93,7 +93,7 @@ export function EventCard({
 
         {/* Scrim keeps the date chip legible over any artwork. */}
         <div
-          className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-ink-950/85 to-transparent"
+          className="image-scrim absolute inset-x-0 top-0 h-24"
           aria-hidden="true"
         />
 

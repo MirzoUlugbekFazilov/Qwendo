@@ -5,7 +5,7 @@ type CookiesToSet = { name: string; value: string; options: CookieOptions }[];
 
 // /discover is deliberately public: browsing without an account is the hook.
 // It personalises itself when a session exists.
-const PROTECTED = ["/saved", "/onboarding", "/picks", "/account"];
+const PROTECTED = ["/saved", "/onboarding", "/picks", "/account", "/profile", "/settings"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

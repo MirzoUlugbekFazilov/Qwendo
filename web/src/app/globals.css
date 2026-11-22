@@ -117,6 +117,55 @@
     color-scheme: dark;
   }
 
+  /* ═══════════════════════════════════════════════════════════════
+     Light theme
+
+     The scales are semantic, not literal: `ink` is always the surface
+     family and `mist` is always the text family. Inverting the two
+     ramps here gives every existing utility its light equivalent —
+     `bg-ink-850` stays "the card", `text-mist-400` stays "secondary
+     text" — so no component needs a second set of classes.
+
+     Accents move rather than invert: iris and moss are chosen for
+     contrast against the page they sit on, so they darken on white.
+     ═══════════════════════════════════════════════════════════════ */
+  :root[data-theme="light"] {
+    color-scheme: light;
+
+    /* surfaces: white page, cool gray steps upward */
+    --color-ink-950: #ffffff;
+    --color-ink-900: #f7f8fb;
+    --color-ink-875: #f2f4f8;
+    --color-ink-850: #edf0f5;
+    --color-ink-800: #e3e8ef;
+    --color-ink-700: #d3dae4;
+    --color-ink-600: #bac3d0;
+    --color-ink-500: #98a3b2;
+
+    /* text: darkest is mist-100, matching the dark theme's brightest */
+    --color-mist-600: #78828f;
+    --color-mist-500: #697382;
+    --color-mist-400: #58616f;
+    --color-mist-300: #3a4350;
+    --color-mist-200: #222935;
+    --color-mist-100: #0f131a;
+
+    /* iris: readable purple on white, still vivid as a fill */
+    --color-iris-200: #5b21b6;
+    --color-iris-300: #6d28d9;
+    --color-iris-400: #7c3aed;
+    --color-iris-500: #6d28d9;
+    --color-iris-600: #5b21b6;
+    --color-iris-700: #4c1d95;
+
+    /* moss: the bright mints disappear on white, so they deepen */
+    --color-moss-200: #065f46;
+    --color-moss-300: #047857;
+    --color-moss-400: #047857;
+    --color-moss-500: #059669;
+    --color-moss-600: #047857;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
@@ -385,6 +434,56 @@
     display: none;
   }
 
+  /* Form control shared by Settings and anything else outside the wizard. */
+  .field {
+    display: block;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-ink-700);
+    background-color: var(--color-ink-900);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-mist-100);
+    transition: border-color 180ms ease, background-color 180ms ease;
+  }
+  .field:hover:not(:disabled) {
+    border-color: var(--color-ink-500);
+  }
+  .field:disabled {
+    opacity: 0.6;
+  }
+  select.field {
+    cursor: pointer;
+  }
+  .field::placeholder {
+    color: var(--color-mist-500);
+  }
+
+  /* Keeps chips legible over artwork. Lighter in the light theme, where a
+     strong scrim hazes the image instead of quietly darkening it. */
+  .image-scrim {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--color-ink-950) 85%, transparent),
+      transparent
+    );
+  }
+
+  /* Panels that float above the page: menus, popovers. */
+  .elevated {
+    box-shadow: 0 24px 60px -28px rgb(0 0 0 / 0.9);
+  }
+
+  /* The home collage fades into the page behind it. */
+  .collage-vignette {
+    background: radial-gradient(
+      50% 56% at 50% 44%,
+      color-mix(in oklab, var(--color-ink-950) 95%, transparent) 28%,
+      color-mix(in oklab, var(--color-ink-950) 58%, transparent) 56%,
+      transparent 100%
+    );
+  }
+
   /* Keyboard hint chip in the search field. */
   .kbd {
     display: inline-flex;
@@ -400,6 +499,66 @@
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────────
+   Light-theme corrections
+
+   Tokens carry almost everything, but a few rules bake in the
+   assumption of a near-black page: white glows, heavy black shadows
+   and `screen` blending all vanish or turn muddy on white. These
+   stay in the components layer so they keep losing to utilities the
+   same way the originals do.
+   ─────────────────────────────────────────────────────────────── */
+@layer components {
+  :root[data-theme="light"] .btn-primary {
+    box-shadow: 0 10px 24px -14px rgb(15 19 26 / 0.5);
+  }
+  :root[data-theme="light"] .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-mist-200);
+    box-shadow: 0 12px 28px -12px rgb(15 19 26 / 0.4);
+  }
+
+  :root[data-theme="light"] .surface-hover:hover {
+    box-shadow: 0 18px 40px -26px rgb(15 19 26 / 0.45);
+  }
+
+  :root[data-theme="light"] .elevated {
+    box-shadow:
+      0 18px 44px -24px rgb(15 19 26 / 0.3),
+      0 2px 8px -4px rgb(15 19 26 / 0.12);
+  }
+
+  :root[data-theme="light"] .image-scrim {
+    background-image: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--color-ink-950) 55%, transparent),
+      transparent
+    );
+  }
+
+  :root[data-theme="light"] .glass {
+    background: color-mix(in oklab, var(--color-ink-950) 78%, transparent);
+    border-color: color-mix(in oklab, var(--color-mist-100) 12%, transparent);
+  }
+
+  /* `screen` adds light, which does nothing on white — `multiply` tints it. */
+  :root[data-theme="light"] .orb {
+    mix-blend-mode: multiply;
+    opacity: 0.55;
+  }
+
+  :root[data-theme="light"] .aurora::before {
+    background:
+      radial-gradient(42rem 26rem at 18% 0%, rgb(124 58 237 / 0.14), transparent 62%),
+      radial-gradient(38rem 24rem at 82% 8%, rgb(16 185 129 / 0.12), transparent 64%),
+      radial-gradient(30rem 20rem at 50% 100%, rgb(139 92 246 / 0.08), transparent 70%);
+  }
+
+  /* Dark noise reads as dirt on a white page — barely there is enough. */
+  :root[data-theme="light"] .grain::after {
+    opacity: 0.06;
   }
 }
 

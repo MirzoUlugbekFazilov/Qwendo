@@ -3,6 +3,7 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
+import { themeInitScript } from "@/lib/theme";
 
 import "./globals.css";
 
@@ -48,6 +49,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  // Dark is the default theme; the init script rewrites this when a member
+  // has chosen light, so the browser chrome always matches the page.
   themeColor: "#0a0b0e",
   width: "device-width",
   initialScale: 1,
@@ -55,7 +58,17 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${displaySans.variable} ${bodySans.variable}`}>
+    // The theme attribute is written by the script below before React hydrates,
+    // so the server markup never matches it — that difference is the point.
+    <html
+      lang="en"
+      className={`${displaySans.variable} ${bodySans.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Sets data-theme before first paint: no flash of the wrong theme. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-dvh antialiased">
         <a
           href="#main"
