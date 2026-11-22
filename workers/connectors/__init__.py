@@ -23,16 +23,56 @@ import asyncio
 import json
 import os
 import re
+import time
 import unicodedata
 from datetime import datetime, timezone
 from urllib.parse import urlencode
 
 from core.models import NormalizedEvent
 from .fetch import Fetcher, checked_url
-from .parsers import ical, jsonld, rss
+from .parsers import ical, jsonld, page_image, rss
 from .reviews import collect_reviews, review, VerificationFailure
 
 BRAVE_URL = "https://api.search.brave.com/res/v1/web/search"
+
+
+# A detail page costs one bounded request, so the budget is deliberately small:
+# a source that never answers in time keeps its events, just without covers.
+DETAIL_IMAGE_LIMIT = 60
+DETAIL_IMAGE_SECONDS = 45
+
+
+async def add_cover_images(fetcher, row, events):
+    """Borrow each event's cover from its own page, where the feed carries none.
+
+    iCalendar has no image property, so an ics source lands with nothing to
+    show and every card falls back to a generated cover. Publishers do state
+    the artwork in schema.org markup on the event page itself, which is one
+    request each — rate-limited and robots-checked like any other, capped, and
+    skipped entirely for events that already arrived with a picture.
+
+    Opt-in per source (`config.detail_images`), because it only pays off where
+    the publisher actually has artwork to give.
+    """
+    config = row.get("config") or {}
+    if config.get("detail_images") is not True:
+        return events
+    cap = min(int(config.get("detail_limit") or DETAIL_IMAGE_LIMIT), DETAIL_IMAGE_LIMIT)
+    deadline = time.monotonic() + DETAIL_IMAGE_SECONDS
+    fetched = 0
+    for event in events:
+        if fetched >= cap or time.monotonic() > deadline:
+            break
+        if not event or event.image_url or not allowed_detail(event.url, fetcher.hosts):
+            continue
+        fetched += 1
+        try:
+            _, body = await fetcher.get(event.url)
+            event.image_url = page_image(body, row)
+        except Exception:
+            # A missing cover is never worth failing a discovery run over.
+            continue
+    return events
 
 
 def allowed_detail(url, hosts):
@@ -144,9 +184,10 @@ async def _discover(row, limit):
         page, body = await fetcher.get(url)
         if kind == "jsonld":
             collect(jsonld(body, row, page))
-            return results
+            return await add_cover_images(fetcher, row, results)
         if kind == "ical":
-            return select_sessions(ical(body, row), limit, datetime.now(timezone.utc))
+            return await add_cover_images(
+                fetcher, row, select_sessions(ical(body, row), limit, datetime.now(timezone.utc)))
         candidates = []
         for link, item in rss(body, row):
             if item:
@@ -171,4 +212,4 @@ async def _discover(row, limit):
         if not parsed:
             review(row, "missing_event_evidence", page)
         collect(parsed)
-    return results
+    return await add_cover_images(fetcher, row, results)

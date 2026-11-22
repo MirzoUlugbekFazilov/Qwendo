@@ -78,6 +78,28 @@ class Connectors(unittest.TestCase):
         self.assertEqual(reviews[0]["reason"], "unknown_start_or_timezone")
         self.assertEqual(reviews[0]["listing"]["url"], URL)
 
+    def test_ical_covers_come_from_the_event_page(self):
+        """A calendar feed has no image, so the event's own page supplies one."""
+        feed = (f"BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:cover1\nSUMMARY:Trio\n"
+                f"DTSTART:20270701T193000Z\nURL:{URL}\nEND:VEVENT\nEND:VCALENDAR").encode()
+        poster = f"https://{HOST}/storage/events/poster.jpg"
+        detail = ('<script type="application/ld+json">' + json.dumps(
+            {**EVENT, "image": poster}) + "</script>").encode()
+
+        async def answer(self, link, **kwargs):
+            return (link, detail if link == URL else feed)
+
+        source = {**ROW, "kind": "ical", "url": f"https://{HOST}/feed.ics",
+                  "config": {"detail_images": True}}
+        with patch.object(Fetcher, "get", new=answer):
+            events = asyncio.run(discover(source, limit=10))
+        self.assertEqual(events[0].image_url, poster)
+
+        # Without the opt-in the page is never fetched, and nothing breaks.
+        with patch.object(Fetcher, "get", new=answer):
+            plain = asyncio.run(discover({**source, "config": {}}, limit=10))
+        self.assertIsNone(plain[0].image_url)
+
     def test_city_scoped_syndication(self):
         body = (f"BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:venue123\nSUMMARY:Trio\n"
                 f"DTSTART:20270701T193000Z\nURL:{URL}\nEND:VEVENT\nEND:VCALENDAR").encode()

@@ -142,6 +142,40 @@ def microdata(scope, depth=0):
     return node
 
 
+def page_image(body, row):
+    """The artwork a publisher states for the event on its own page.
+
+    Calendar feeds have no image property at all, so for an ics source this is
+    the only place a cover can come from. Same host rules as every other URL a
+    source hands us, and the same refusal to mistake a site logo for artwork.
+    """
+    tree = HTMLParser(body)
+    for document in [s.text() for s in tree.css('script[type="application/ld+json"]')]:
+        try:
+            stack = [json.loads(document)]
+        except (ValueError, RecursionError):
+            continue
+        while stack:
+            obj = stack.pop()
+            if isinstance(obj, list):
+                stack.extend(reversed(obj))
+            elif isinstance(obj, dict):
+                if event_type(obj.get("@type")):
+                    found, _ = listing_image(obj, row)
+                    if found:
+                        return found
+                stack.extend(reversed([v for v in obj.values() if isinstance(v, (dict, list))]))
+    for meta in tree.css('meta[property="og:image"], meta[name="twitter:image"]'):
+        candidate = meta.attributes.get("content")
+        try:
+            parsed = checked_url(candidate, row["allowed_hosts"])
+        except ValueError:
+            continue
+        if not GENERIC_IMAGE.search(parsed.path):
+            return candidate
+    return None
+
+
 def jsonld(body, row, page):
     tree = HTMLParser(body)
     documents = [s.text() for s in tree.css('script[type="application/ld+json"]')]
