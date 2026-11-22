@@ -193,7 +193,7 @@ export default async function HomePage() {
       {/* ── Live demo ────────────────────────────────────────── */}
       <section
         id="matching-demo"
-        className="reveal relative scroll-mt-16 overflow-hidden border-y border-ink-800 bg-gradient-to-b from-ink-850 via-ink-875 to-ink-900"
+        className="reveal relative scroll-mt-16 overflow-hidden"
       >
         <AuroraBackdrop variant="section" />
         <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">

@@ -73,6 +73,16 @@ export function AuroraBackdrop({
           style={{ animation: orb.animation, animationDelay: orb.delay }}
         />
       ))}
+
+      {/* A tinted section with hard edges reads as a slab pasted onto the page.
+          Fading the colour out at the top and bottom lets it dissolve into the
+          sections either side, so there is no seam to notice. */}
+      {variant === "section" && (
+        <>
+          <span className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-ink-950 to-transparent" />
+          <span className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-ink-950 to-transparent" />
+        </>
+      )}
     </div>
   );
 }
