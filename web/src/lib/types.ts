@@ -2,6 +2,12 @@ export type QwendoEvent = {
   id: string;
   source: string;
   url: string;
+  verification_status?: "verified" | "pending_review" | "rejected" | "cancelled";
+  official_url?: string | null;
+  last_verified_at?: string | null;
+  first_seen_at?: string | null;
+  source_published_at?: string | null;
+  canonical_event_id?: string | null;
   title: string;
   summary: string | null;
   description: string | null;

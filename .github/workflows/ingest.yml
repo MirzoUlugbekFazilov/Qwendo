@@ -1,57 +1,28 @@
-name: Ingest events
-
-# Keeps the catalogue fresh: new listings land in Qwendo within hours of
-# being posted on the source marketplaces.
+name: Discover verified events
 on:
   schedule:
-    - cron: "0 */6 * * *" # every 6 hours
+    - cron: "*/10 * * * *"
   workflow_dispatch:
-    inputs:
-      sources:
-        description: "Comma-separated source slugs (blank = all configured)"
-        required: false
-      cities:
-        description: "Comma-separated cities (blank = DEFAULT_CITIES)"
-        required: false
-
+permissions:
+  contents: read
+concurrency:
+  group: qwendo-discovery
+  cancel-in-progress: false
 jobs:
-  ingest:
+  discovery:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      EMBEDDING_PROVIDER: ${{ vars.EMBEDDING_PROVIDER || 'local' }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
-      EVENTBRITE_TOKEN: ${{ secrets.EVENTBRITE_TOKEN }}
-      DEFAULT_CITIES: ${{ github.event.inputs.cities || vars.DEFAULT_CITIES || 'London' }}
-
+      BRAVE_SEARCH_API_KEY: ${{ secrets.BRAVE_SEARCH_API_KEY }}
+      DEFAULT_CITIES: ${{ vars.DEFAULT_CITIES || 'London' }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-
-      - name: Install dependencies
-        run: pip install -r requirements-scrapers.txt
-
-      - name: Install Chromium (for JS-rendered sources)
-        run: python -m playwright install --with-deps chromium
-
-      - name: Run ingestion
-        run: |
-          ARGS=""
-          if [ -n "${{ github.event.inputs.sources }}" ]; then
-            for source in $(echo "${{ github.event.inputs.sources }}" | tr ',' ' '); do
-              ARGS="$ARGS -s $source"
-            done
-          fi
-          python -m workers.run ingest $ARGS
-
-      - name: Retire past events
-        if: always()
-        run: python -m workers.run expire
+      - run: pip install -r requirements.txt
+      - run: python -m workers.discovery_jobs

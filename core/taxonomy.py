@@ -25,6 +25,7 @@ CANONICAL_CATEGORIES: dict[str, str] = {
     "nightlife": "Nightlife",
     "education": "Learning",
     "family": "Family",
+    "fashion": "Fashion & Lifestyle",
 }
 
 # Ordered most-specific first: the first match wins for the primary category.
@@ -62,6 +63,7 @@ _KEYWORD_RULES: list[tuple[str, tuple[str, ...]]] = [
                    "bar crawl", "late night", "party")),
     ("community", ("volunteer", "charity", "fundraiser", "community", "language exchange",
                    "book club", "author talk", "poetry", "spoken word", "meetup", "social club")),
+    ("fashion", ("fashion", "runway", "vintage clothing", "streetwear", "designer showcase")),
     ("family", ("family", "kids", "children", "toddler", "half term", "family-friendly")),
 ]
 
@@ -113,6 +115,10 @@ def map_source_category(source: str, raw_value: str | None) -> str | None:
     return key if key in CANONICAL_CATEGORIES else None
 
 
+def _contains(text: str, term: str) -> bool:
+    return re.search(r"(?<!\w)" + re.escape(term.strip()) + r"(?!\w)", text) is not None
+
+
 def infer_categories(*texts: str | None, seed: list[str] | None = None, limit: int = 3) -> list[str]:
     """Derive canonical categories from free text, keeping any seeded ones first."""
     haystack = " " + re.sub(r"\s+", " ", " ".join(t or "" for t in texts).lower()) + " "
@@ -121,12 +127,12 @@ def infer_categories(*texts: str | None, seed: list[str] | None = None, limit: i
     for category, keywords in _KEYWORD_RULES:
         if category in found:
             continue
-        if any(keyword in haystack for keyword in keywords):
+        if any(_contains(haystack, keyword) for keyword in keywords):
             found.append(category)
         if len(found) >= limit:
             break
 
-    return found or ["community"]
+    return found[:limit]
 
 
 def extract_tags(*texts: str | None, limit: int = 12) -> list[str]:
@@ -136,54 +142,8 @@ def extract_tags(*texts: str | None, limit: int = 12) -> list[str]:
     for _, keywords in _KEYWORD_RULES:
         for keyword in keywords:
             cleaned = keyword.strip()
-            if len(cleaned) > 2 and cleaned in haystack and cleaned not in tags:
+            if _contains(haystack, cleaned) and cleaned not in tags:
                 tags.append(cleaned)
             if len(tags) >= limit:
                 return tags
     return tags
-
-
-def build_interest_text(
-    interest_labels: list[str],
-    interest_keywords: list[str],
-    free_text: str | None = None,
-    city: str | None = None,
-) -> str:
-    """Compose the string that becomes a user's taste embedding.
-
-    Keywords are repeated alongside labels so that the local hashed embedder has
-    enough vocabulary overlap with event descriptions to be useful.
-    """
-    parts: list[str] = []
-    if interest_labels:
-        parts.append("Interested in " + ", ".join(interest_labels) + ".")
-    if interest_keywords:
-        parts.append(" ".join(interest_keywords))
-    if free_text:
-        parts.append(free_text.strip())
-    if city:
-        parts.append(f"Events in {city}.")
-    return " ".join(part for part in parts if part).strip()
-
-
-def event_embedding_text(
-    title: str,
-    description: str | None = None,
-    categories: list[str] | None = None,
-    tags: list[str] | None = None,
-    venue: str | None = None,
-    city: str | None = None,
-    organizer: str | None = None,
-) -> str:
-    """Compose the string that becomes an event's embedding."""
-    labels = [CANONICAL_CATEGORIES.get(c, c) for c in (categories or [])]
-    pieces = [
-        title,
-        title,  # title weighted twice: it carries the strongest signal
-        ", ".join(labels),
-        " ".join(tags or []),
-        organizer or "",
-        f"{venue or ''} {city or ''}".strip(),
-        (description or "")[:2000],
-    ]
-    return " ".join(piece for piece in pieces if piece).strip()

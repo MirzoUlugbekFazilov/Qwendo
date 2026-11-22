@@ -3,8 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EventGrid } from "@/components/event-grid";
+import { getRelevance } from "@/components/picks-api";
 import { CalendarIcon, ClockIcon, GlobeIcon, MapPinIcon, TicketIcon } from "@/components/icons";
 import { SaveButton } from "@/components/save-button";
+import { officialLinks, sourceListing } from "@/components/picks-model";
+import { EventProvenance } from "@/components/event-provenance";
 import { TicketLink } from "@/components/ticket-link";
 import { ApiError, EMPTY_LIST, api, safe } from "@/lib/api";
 import {
@@ -14,7 +17,6 @@ import {
   eventZone,
   formatDate,
   formatPrice,
-  hostnameOf,
 } from "@/lib/format";
 import { getAccessToken } from "@/lib/supabase/server";
 
@@ -26,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const event = await api.event(id);
     return {
       title: event.title,
-      description: event.summary ?? `${event.title} — tickets and details on Qwendo.`,
+      description: event.summary ?? `${event.title} — event details on Qwendo.`,
       openGraph: {
         title: event.title,
         description: event.summary ?? "",
@@ -50,7 +52,7 @@ export default async function EventPage({ params }: Props) {
   }
 
   const token = await getAccessToken();
-  const [saved, similar] = await Promise.all([
+  const [saved, similar, match] = await Promise.all([
     token ? safe(api.saved(token), EMPTY_LIST) : Promise.resolve(EMPTY_LIST),
     safe(
       api.events({
@@ -60,12 +62,14 @@ export default async function EventPage({ params }: Props) {
       }),
       EMPTY_LIST,
     ),
+    token ? safe(getRelevance(token, event.id), null) : null,
   ]);
 
   const isSaved = saved.items.some((item) => item.id === event.id);
   const related = similar.items.filter((item) => item.id !== event.id).slice(0, 3);
   const sourceLabel = SOURCE_LABELS[event.source] ?? event.source;
-  const destination = hostnameOf(event.url);
+  const [officialUrl] = officialLinks(event);
+  const listingUrl = sourceListing(event);
 
   return (
     <article className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
@@ -124,11 +128,20 @@ export default async function EventPage({ params }: Props) {
             )}
           </header>
 
+          {match && (match.reason || match.matched_interest) && (
+            <section className="surface space-y-2 rounded-card p-5">
+              <h2 className="font-display text-lg font-semibold">Why this is in your picks</h2>
+              {match.reason && <p>{match.reason}</p>}
+              {match.matched_interest && <p className="text-sm text-mist-400">Matched interest · {match.matched_interest}</p>}
+              <Link href="/picks" className="text-sm text-iris-200 underline">View your picks</Link>
+            </section>
+          )}
+
           {(
             <section className="space-y-3">
               <h2 className="font-display text-lg font-semibold text-mist-100">About this event</h2>
               <p className="whitespace-pre-line text-[0.95rem] leading-relaxed text-mist-300">
-                {event.description || event.summary || <a className="underline" href={event.url}>Read the event overview on {sourceLabel}</a>}
+                {event.description || event.summary || "No overview provided."}
               </p>
             </section>
           )}
@@ -161,7 +174,7 @@ export default async function EventPage({ params }: Props) {
                   <dt className="text-mist-500">Starts</dt>
                   <dd className="font-medium text-mist-100">
                     {formatDate(event.starts_at, eventZone(event))}
-                    {event.ends_at && <span className="block">Ends {formatDate(event.ends_at, eventZone(event))}</span>}
+                    {event.ends_at && <span className="block">Ends {formatDate(event.ends_at, eventZone(event, event.ends_at))}</span>}
                   </dd>
                 </div>
               </div>
@@ -191,28 +204,22 @@ export default async function EventPage({ params }: Props) {
             </dl>
 
             <div className="space-y-2.5 border-t border-ink-800 pt-5">
-              <TicketLink
+              {officialUrl && <TicketLink
                 eventId={event.id}
-                url={event.url}
+                url={officialUrl}
                 source={sourceLabel}
                 className="btn btn-primary h-12 w-full"
-              />
+              />}
               <div className="[&>button]:w-full">
                 <SaveButton eventId={event.id} initiallySaved={isSaved} variant="full" />
               </div>
             </div>
 
-            <p className="text-xs leading-relaxed text-mist-500">
-              Qwendo doesn&apos;t sell tickets. This opens the official listing for this
-              event on {sourceLabel}
-              {destination && (
-                <>
-                  {" "}
-                  (<span className="text-mist-400">{destination}</span>)
-                </>
-              )}
-              , where you complete the booking.
-            </p>
+            <div className="space-y-1">
+              <EventProvenance event={event} />
+              {listingUrl && <a href={listingUrl} target="_blank" rel="noopener noreferrer nofollow"
+                className="text-sm text-iris-200 underline">Source listing</a>}
+            </div>
 
             {!event.is_online && event.address && event.lat != null && event.lng != null && (
               <a

@@ -6,11 +6,10 @@ export default function NotFound() {
       <div className="space-y-4">
         <p className="font-display text-sm font-semibold tracking-[0.2em] text-moss-400">404</p>
         <h1 className="font-display text-3xl font-bold text-mist-100">
-          That event has left the building
+          Page unavailable
         </h1>
         <p className="mx-auto max-w-md text-mist-400">
-          It may have sold out, been cancelled, or already happened — exactly the problem Qwendo
-          exists to solve.
+          Explore the catalogue to find upcoming events.
         </p>
         <Link
           href="/discover"

@@ -33,7 +33,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const {
     token,
     method = "GET",

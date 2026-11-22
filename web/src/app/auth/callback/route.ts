@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { authDestination } from "@/lib/auth-destination";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const origin = publicOrigin(request);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") || "/discover";
+  const next = authDestination(searchParams.get("next"));
 
   // The provider itself can reject the attempt (user cancelled, app not
   // configured, consent withdrawn) — it reports that here, not via `code`.

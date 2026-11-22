@@ -13,12 +13,11 @@ Contract details this client honours:
 
 from __future__ import annotations
 
-import asyncio
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any
-
-import httpx
+from urllib.parse import urlencode, urlsplit
 
 from core.config import settings
 from core.models import NormalizedEvent
@@ -27,11 +26,12 @@ from core.text import (
     clean_title,
     make_summary,
     normalize_city,
-    parse_datetime,
-    parse_local_datetime,
     strip_html,
 )
 from workers.sources.base import EventSource
+from workers.connectors.fetch import Fetcher, checked_url
+from workers.connectors.parsers import instant
+from workers.connectors.reviews import review
 
 log = logging.getLogger("qwendo.sources.ticketmaster")
 
@@ -39,7 +39,6 @@ API_URL = "https://app.ticketmaster.com/discovery/v2/events.json"
 
 PAGE_SIZE = 100
 DEEP_PAGING_CAP = 1000  # size * page must stay under this
-REQUEST_SPACING = 0.25  # seconds → max 4 req/s, inside the 5 req/s limit
 
 # Ticketmaster matches city names loosely, so pin the country too: without it
 # "London" also returns London, Ontario.
@@ -79,7 +78,6 @@ CITY_COUNTRY = {
 # dates.status.code → our status vocabulary
 STATUS_MAP = {
     "onsale": "active",
-    "offsale": "sold_out",
     "cancelled": "cancelled",
     "canceled": "cancelled",
     "postponed": "postponed",
@@ -103,6 +101,8 @@ class TicketmasterSource(EventSource):
         query: str | None = None,
         limit: int = 200,
         lookahead_days: int | None = None,
+        allowed_hosts: frozenset[str] | None = None,
+        review_source: dict | None = None,
     ) -> list[NormalizedEvent]:
         if not self.is_configured():
             log.info("Skipping Ticketmaster: TICKETMASTER_API_KEY is not set")
@@ -135,80 +135,61 @@ class TicketmasterSource(EventSource):
         seen: set[str] = set()
         max_page = max(DEEP_PAGING_CAP // PAGE_SIZE - 1, 0)
 
-        async with self.http_client() as client:
-            for page in range(max_page + 1):
-                if len(events) >= limit:
-                    break
-
-                params = {**base_params, "page": page}
-                try:
-                    response = await self.get(client, API_URL, params=params)
-                except httpx.HTTPError as exc:
-                    log.warning("Ticketmaster request failed on page %s: %s", page, exc)
-                    break
-
-                if response.status_code == 429:
-                    log.warning("Ticketmaster rate limit hit; backing off")
-                    await asyncio.sleep(2)
+        fetcher = Fetcher(["app.ticketmaster.com"])
+        for page in range(max_page + 1):
+            if len(events) >= limit:
+                break
+            params = {**base_params, "page": page}
+            _, body = await fetcher.get(API_URL + "?" + urlencode(params), api=True)
+            payload = json.loads(body)
+            batch = (payload.get("_embedded") or {}).get("events") or []
+            if not batch:
+                break
+            for raw in batch:
+                if not isinstance(raw, dict):
                     continue
-                if response.status_code == 401:
-                    raise RuntimeError(
-                        "Ticketmaster rejected the API key (401). Check TICKETMASTER_API_KEY "
-                        "— use the Consumer Key from developer.ticketmaster.com."
-                    )
-                if response.status_code != 200:
-                    log.warning(
-                        "Ticketmaster %s: %s", response.status_code, response.text[:200]
-                    )
-                    break
-
-                payload = response.json()
-                batch = (payload.get("_embedded") or {}).get("events") or []
-                if not batch:
-                    break
-
-                for raw in batch:
-                    external_id = str(raw.get("id") or "")
-                    if not external_id or external_id in seen:
-                        continue
-                    seen.add(external_id)
-                    normalized = self._normalize(raw, city)
-                    if normalized:
-                        events.append(normalized)
-
-                page_info = payload.get("page") or {}
-                total_pages = int(page_info.get("totalPages") or 0)
-                if page + 1 >= total_pages:
-                    break
-
-                await asyncio.sleep(REQUEST_SPACING)
+                normalized = self._normalize(raw, city, allowed_hosts=allowed_hosts)
+                if normalized is None and review_source is not None:
+                    review(review_source, "unusable_ticketmaster_record", raw.get("url"),
+                           raw.get("name"), raw.get("id"))
+                if normalized and normalized.external_id not in seen:
+                    seen.add(normalized.external_id)
+                    events.append(normalized)
+            if page + 1 >= int((payload.get("page") or {}).get("totalPages") or 0):
+                break
 
         log.info("Ticketmaster returned %s events for %s", len(events), city or "anywhere")
         return events[:limit]
 
     # ── normalization ───────────────────────────────────────────
-    def _normalize(self, raw: dict[str, Any], fallback_city: str | None) -> NormalizedEvent | None:
+    def _normalize(self, raw: dict[str, Any], fallback_city: str | None,
+                   *, allowed_hosts=None) -> NormalizedEvent | None:
         try:
             # The purchase page. Without it the listing is useless to a user.
             url = raw.get("url")
-            if not url:
+            if not url or not raw.get("name") or not raw.get("id"):
                 log.debug("Skipping Ticketmaster event %s: no ticket URL", raw.get("id"))
                 return None
 
             dates = raw.get("dates") or {}
+            if not checked_url(url, allowed_hosts if allowed_hosts is not None else {urlsplit(url).hostname}).path.strip("/"):
+                return None
+            code = (dates.get("status") or {}).get("code")
+            if code not in STATUS_MAP:
+                return None
             start = dates.get("start") or {}
             tz_name = dates.get("timezone")
 
-            starts_at = parse_datetime(start.get("dateTime")) or parse_local_datetime(
-                start.get("localDate"), start.get("localTime") or "19:00", tz_name
-            )
+            if any(start.get(flag) for flag in ("dateTBA", "dateTBD", "timeTBA", "noSpecificTime")):
+                return None
+            starts_at = instant(start.get("dateTime")) or instant(
+                f"{start.get('localDate')}T{start.get('localTime')}", tz_name)
             if not starts_at:
                 return None
 
             end = dates.get("end") or {}
-            ends_at = parse_datetime(end.get("dateTime")) or parse_local_datetime(
-                end.get("localDate"), end.get("localTime"), tz_name
-            )
+            ends_at = instant(end.get("dateTime")) or instant(
+                f"{end.get('localDate')}T{end.get('localTime')}", tz_name)
 
             embedded = raw.get("_embedded") or {}
             venues = (embedded.get("venues") or [{}])[0]
@@ -244,7 +225,7 @@ class TicketmasterSource(EventSource):
                 title=title,
                 description=description or None,
                 summary=make_summary(description),
-                image_url=self._best_image(raw.get("images") or []),
+                image_url=None,
                 starts_at=starts_at,
                 ends_at=ends_at,
                 timezone=tz_name,
@@ -253,7 +234,7 @@ class TicketmasterSource(EventSource):
                 address=" ".join(
                     filter(None, [address.get("line1"), address.get("line2")])
                 ) or None,
-                city=normalize_city((venues.get("city") or {}).get("name") or fallback_city),
+                city=normalize_city((venues.get("city") or {}).get("name")),
                 region=(venues.get("state") or {}).get("name"),
                 country=(venues.get("country") or {}).get("countryCode"),
                 lat=self._to_float(location.get("latitude")),
@@ -262,7 +243,7 @@ class TicketmasterSource(EventSource):
                 price_max=price_max,
                 currency=currency,
                 is_free=price_min == 0,
-                organizer=promoter or (attractions[0] if attractions else None),
+                organizer=promoter,
                 categories=infer_categories(
                     title, description, genre, sub_genre, " ".join(attractions), seed=seed
                 ),
@@ -270,7 +251,7 @@ class TicketmasterSource(EventSource):
                 # Ticketed, venue-scale events: a higher floor than community listings,
                 # lifted when the event carries published pricing (a real on-sale).
                 popularity=55.0 if price_min is not None else 45.0,
-                status=STATUS_MAP.get((dates.get("status") or {}).get("code", ""), "active"),
+                status=STATUS_MAP[code],
                 raw={
                     "segment": segment,
                     "genre": genre,
@@ -305,17 +286,6 @@ class TicketmasterSource(EventSource):
             float(max(maxes)) if maxes else None,
             currency,
         )
-
-    @staticmethod
-    def _best_image(images: list[dict[str, Any]]) -> str | None:
-        """Widest non-fallback 16:9 artwork."""
-        usable = [img for img in images if img.get("url") and not img.get("fallback")]
-        if not usable:
-            usable = [img for img in images if img.get("url")]
-        if not usable:
-            return None
-        wide = [img for img in usable if img.get("ratio") == "16_9"]
-        return max(wide or usable, key=lambda img: img.get("width") or 0)["url"]
 
     @staticmethod
     def _tags(

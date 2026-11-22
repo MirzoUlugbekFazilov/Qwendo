@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getAccessToken } from "@/lib/supabase/server";
+import { getDiscovery } from "@/components/picks-api";
 
 import { EventGrid } from "@/components/event-grid";
 import { AuroraBackdrop } from "@/components/aurora-backdrop";
@@ -44,17 +47,19 @@ const STEPS = [
   },
   {
     number: "02",
-    title: "We watch every marketplace",
-    body: "Scrapers pull new listings from Ticketmaster, Eventbrite and Luma the moment they're posted.",
+    title: "We check approved sources",
+    body: "Scheduled checks collect listings from permitted feeds and official sources.",
   },
   {
     number: "03",
     title: "You get the ones that fit",
-    body: "A vector search ranks every event against your taste, your city and how soon it sells out.",
+    body: "Your topics, city and preferences determine which listings appear first.",
   },
 ];
 
 export default async function HomePage() {
+  const token = await getAccessToken();
+  if (token && (await safe(getDiscovery(token), null))?.profile) redirect("/picks");
   const [interests, trending, heroEvents, stats] = await Promise.all([
     safe(api.interests(), []),
     // Over-fetch: the hero claims six of these, and showing the same event
@@ -78,7 +83,7 @@ export default async function HomePage() {
   // claiming numbers that stopped being true.
   const facts = [
     { value: stats.events ? stats.events.toLocaleString("en-GB") : "—", label: "upcoming events tracked" },
-    { value: stats.sources || "—", label: "marketplaces watched" },
+    { value: stats.sources || "—", label: "catalogue sources" },
     { value: stats.interests || "—", label: "interests to match on" },
     { value: "0", label: "booking fees — we don't sell tickets" },
   ];
@@ -95,19 +100,9 @@ export default async function HomePage() {
             href="/discover"
             className="animate-fade group inline-flex items-center gap-2.5 rounded-pill border border-ink-700 bg-ink-900/80 py-1.5 pl-1.5 pr-3.5 text-xs font-medium text-mist-300 backdrop-blur transition-colors duration-200 hover:border-ink-500 hover:text-mist-100"
           >
-            <span className="inline-flex items-center gap-1.5 rounded-pill bg-iris-500/20 px-2.5 py-1 text-[0.6875rem] font-semibold text-iris-200">
-              <span className="relative flex h-1.5 w-1.5">
-                <span
-                  className="absolute inline-flex h-full w-full rounded-full bg-moss-400"
-                  style={{ animation: "ping-soft 2.4s cubic-bezier(0,0,0.2,1) infinite" }}
-                />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-moss-400" />
-              </span>
-              Live
-            </span>
             {stats.events > 0
-              ? `${stats.events.toLocaleString("en-GB")} events tracked right now`
-              : "AI event discovery across every marketplace"}
+              ? `${stats.events.toLocaleString("en-GB")} upcoming events`
+              : "Explore the event catalogue"}
             <ArrowRightIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
           </Link>
 
@@ -117,8 +112,7 @@ export default async function HomePage() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-mist-400">
-            Qwendo finds events for you, then ranks based on your interests while tickets
-            are still available.
+            Find events by topic, location and date, then check the official listing for booking details.
           </p>
 
           <div className="mx-auto mt-10 max-w-3xl">
@@ -202,8 +196,7 @@ export default async function HomePage() {
               Try it right now. <span className="text-iris-300">No account.</span>
             </h2>
             <p className="mt-4 text-mist-400">
-              Pick a few interests and watch the feed rebuild itself against what&apos;s actually
-              on sale in London.
+              Pick a few interests and watch the feed rebuild itself against upcoming listings in London.
             </p>
           </div>
           <TastePreview interests={interests} />
@@ -288,11 +281,10 @@ export default async function HomePage() {
           <AuroraBackdrop variant="section" />
           <h2 className="relative font-display text-3xl font-extrabold text-mist-100 sm:text-4xl">
             Your next favourite night is{" "}
-            <span className="text-gradient">already on sale</span>
+            <span className="text-gradient">waiting to be discovered</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-mist-400">
-            Set your interests once. We&apos;ll keep watching every marketplace so you don&apos;t
-            have to.
+            Set your interests once. See upcoming events that match your choices.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link href="/login?mode=signup" className="btn btn-primary h-12 px-7">

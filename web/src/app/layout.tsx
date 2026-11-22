@@ -29,10 +29,10 @@ export const metadata: Metadata = {
     template: "%s · Qwendo",
   },
   description:
-    "Qwendo watches Ticketmaster, Eventbrite, Luma and more, then uses AI to surface the events that match your interests — while tickets are still on sale.",
+    "Discover upcoming events from approved sources, ranked by your interests and preferences.",
   keywords: [
     "event discovery",
-    "AI event recommendations",
+    "Personalised event recommendations",
     "concerts near me",
     "tech events",
     "hackathons",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Qwendo — never miss the event you care about",
     description:
-      "One feed for every ticket marketplace, ranked against what you actually like.",
+      "Explore upcoming events by interest and location.",
     type: "website",
   },
   robots: { index: true, follow: true },

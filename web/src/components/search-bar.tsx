@@ -17,6 +17,56 @@ const CITIES = [
   "Tashkent",
 ];
 
+/** Cycled through the placeholder, one character at a time. */
+const SUGGESTIONS = ["hackathons", "networking events", "concerts"];
+
+const TYPE_MS = 85;
+const DELETE_MS = 45;
+const HOLD_MS = 1600;
+
+/**
+ * Types each suggestion into the placeholder, holds, deletes, moves on.
+ *
+ * Only ever touches the placeholder — never the input's value — so it cannot
+ * interfere with what the user types, and it stops the moment they engage.
+ * Falls back to a static string when the user prefers reduced motion.
+ */
+function useTypedPlaceholder(active: boolean) {
+  const [text, setText] = useState(SUGGESTIONS[0]);
+
+  useEffect(() => {
+    if (!active) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let word = 0;
+    let char = 0;
+    let deleting = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const tick = () => {
+      const target = SUGGESTIONS[word];
+      char += deleting ? -1 : 1;
+      setText(target.slice(0, char));
+
+      let delay = deleting ? DELETE_MS : TYPE_MS;
+      if (!deleting && char === target.length) {
+        deleting = true;
+        delay = HOLD_MS;
+      } else if (deleting && char === 0) {
+        deleting = false;
+        word = (word + 1) % SUGGESTIONS.length;
+        delay = 350;
+      }
+      timer = setTimeout(tick, delay);
+    };
+
+    timer = setTimeout(tick, HOLD_MS);
+    return () => clearTimeout(timer);
+  }, [active]);
+
+  return text;
+}
+
 /** Hero search: on a discovery marketplace the search field *is* the primary CTA. */
 export function SearchBar({
   defaultQuery = "",

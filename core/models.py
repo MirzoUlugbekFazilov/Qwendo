@@ -56,7 +56,7 @@ class NormalizedEvent(BaseModel):
 
     @property
     def fingerprint(self) -> str:
-        """Changes only when user-visible content changes → cheap re-embed guard."""
+        """Changes only when user-visible content changes."""
         return content_hash(
             self.title,
             self.description,
@@ -72,7 +72,7 @@ class NormalizedEvent(BaseModel):
             ",".join(sorted(self.categories)),
         )
 
-    def to_row(self, *, embedding: str | None = None) -> dict[str, Any]:
+    def to_row(self) -> dict[str, Any]:
         now = datetime.now(dt_timezone.utc).isoformat()
         row: dict[str, Any] = {
             "source": self.source,
@@ -106,7 +106,4 @@ class NormalizedEvent(BaseModel):
             "raw": self.raw,
             "last_seen_at": now,
         }
-        if embedding is not None:
-            row["embedding"] = embedding
-            row["embedded_at"] = now
         return row

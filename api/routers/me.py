@@ -6,8 +6,9 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query, status
 
-from api.deps import CurrentUser, Db
-from api.routers.events import LIST_COLUMNS
+from api.deps import CurrentUser, Db, get_anon_db
+from api.catalogue import LIST_COLUMNS, public_filters, public_items
+from api.routers.events import get_event
 from api.schemas import (
     EventListOut,
     EventOut,
@@ -18,7 +19,7 @@ from api.schemas import (
     ProfileUpdateIn,
     SaveIn,
 )
-from api.services import get_profile, refresh_profile_embedding
+from api.services import get_profile
 
 router = APIRouter(tags=["me"])
 
@@ -48,10 +49,6 @@ async def update_profile(db: Db, user: CurrentUser, payload: ProfileUpdateIn) ->
         await db.update(
             "profiles", values, filters={"id": f"eq.{user['id']}"}, returning="minimal"
         )
-
-    # The city is part of the taste text, so a move re-embeds the profile.
-    if "city" in values:
-        await refresh_profile_embedding(db, user["id"], city=values["city"])
 
     profile = await get_profile(db, user)
     return MeOut(
@@ -96,39 +93,34 @@ async def update_interests(db: Db, user: CurrentUser, payload: InterestsUpdateIn
             "profiles", updates, filters={"id": f"eq.{user_id}"}, returning="minimal"
         )
 
-    await refresh_profile_embedding(
-        db,
-        user_id,
-        slugs=payload.interests,
-        interest_text=updates.get("interest_text"),
-        city=updates.get("city"),
-    )
-
     profile = await get_profile(db, user)
     return MeOut(profile=ProfileOut.model_validate(profile), interests=payload.interests)
 
 
 @router.get("/me/saved", response_model=EventListOut)
 async def saved_events(
-    db: Db,
     user: CurrentUser,
     state: Annotated[str, Query(pattern="^(saved|going|dismissed)$")] = "saved",
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> EventListOut:
-    rows = await db.select(
+    rows = await get_anon_db().as_user(user["access_token"]).select(
         "saved_events",
-        columns=f"state,created_at,events({LIST_COLUMNS})",
-        filters={"user_id": f"eq.{user['id']}", "state": f"eq.{state}"},
+        columns=f"state,created_at,events!saved_events_event_id_fkey!inner({LIST_COLUMNS})",
+        filters={"user_id": f"eq.{user['id']}", "state": f"eq.{state}",
+                 **{"events." + key: value for key, value in public_filters().items()}},
         order="created_at.desc",
         limit=limit,
     ) or []
 
-    items = [EventOut.model_validate(row["events"]) for row in rows if row.get("events")]
+    items = [EventOut.model_validate(item) for item in public_items(
+        [row["events"] for row in rows if row.get("events")])]
     return EventListOut(items=items, count=len(items), limit=limit, offset=0)
 
 
 @router.put("/events/{event_id}/save", response_model=MessageOut)
-async def save_event(db: Db, user: CurrentUser, event_id: str, payload: SaveIn) -> MessageOut:
+async def save_event(user: CurrentUser, event_id: str, payload: SaveIn) -> MessageOut:
+    db = get_anon_db().as_user(user["access_token"])
+    await get_event(db, event_id)
     await db.insert(
         "saved_events",
         {"user_id": user["id"], "event_id": event_id, "state": payload.state},
@@ -140,8 +132,8 @@ async def save_event(db: Db, user: CurrentUser, event_id: str, payload: SaveIn) 
 
 
 @router.delete("/events/{event_id}/save", response_model=MessageOut)
-async def unsave_event(db: Db, user: CurrentUser, event_id: str) -> MessageOut:
-    await db.delete(
+async def unsave_event(user: CurrentUser, event_id: str) -> MessageOut:
+    await get_anon_db().as_user(user["access_token"]).delete(
         "saved_events", filters={"user_id": f"eq.{user['id']}", "event_id": f"eq.{event_id}"}
     )
     return MessageOut(ok=True, message="removed")

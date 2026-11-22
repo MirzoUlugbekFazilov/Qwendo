@@ -1,160 +1,126 @@
-"""Command line entrypoint for the ingestion workers.
-
-    python -m workers.run seed                        # load the demo catalogue
-    python -m workers.run ingest                      # every configured source, default cities
-    python -m workers.run ingest -s ticketmaster -c London -c Manchester
-    python -m workers.run ingest -s luma --query "ai"
-    python -m workers.run links -n 40                 # audit outbound ticket links
-    python -m workers.run embed --limit 1000          # backfill missing vectors
-    python -m workers.run expire                      # retire events that already happened
-    python -m workers.run sources                     # show configuration status
-"""
-
-from __future__ import annotations
-
+"""Operate Qwendo's discovery queue and inspect the catalogue."""
 import argparse
 import asyncio
+from datetime import UTC, datetime, timedelta
+import hashlib
+import json
 import logging
 import sys
 
+import httpx
+
 from core.config import settings
+from core.links import classify_event_url
 from core.supabase import service_client
-from workers.pipeline import backfill_embeddings, expire_past_events, run_ingestion
-from workers.seed_demo import seed
-from workers.sources import SOURCES
+from workers import discovery_jobs
+from workers.connectors.fetch import checked_url
 
 
-def _configure_logging(verbose: bool) -> None:
-    logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO,
-        format="%(asctime)s  %(levelname)-7s %(name)s  %(message)s",
-        datefmt="%H:%M:%S",
-    )
-    logging.getLogger("httpx").setLevel(logging.WARNING)
+def positive(value):
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("limit must be positive")
+    return number
 
 
-async def _ingest(args: argparse.Namespace) -> int:
-    results = await run_ingestion(
-        sources=args.source or None,
-        cities=args.city or None,
-        query=args.query,
-        limit_per_source=args.limit,
-    )
-    if not results:
-        print("Nothing ran. Check your source credentials in .env.")
-        return 1
-
-    print(f"\n{'source':<14}{'city':<16}{'found':>7}{'new':>7}{'upd':>7}  status")
-    print("-" * 62)
-    for row in results:
-        print(
-            f"{row['source']:<14}{(row['city'] or 'anywhere'):<16}"
-            f"{row['found']:>7}{row['inserted']:>7}{row['updated']:>7}  {row['status']}"
-        )
-        if row.get("error"):
-            print(f"  ↳ {row['error']}")
-
-    # A blocked or empty source is reported, not treated as a build failure:
-    # one marketplace refusing a datacenter IP shouldn't turn the whole
-    # scheduled run red while the other sources are working fine.
-    return 1 if any(row["status"] == "failed" for row in results) else 0
-
-
-async def _seed(_: argparse.Namespace) -> int:
-    inserted, updated, _skipped = await seed()
-    print(f"Demo catalogue ready: {inserted} inserted, {updated} updated.")
-    print(
-        "\nNote: demo events are fictional and link to marketplace search pages,\n"
-        "not real ticket listings. Clear them before any public demo:\n"
-        "  delete from public.events where source = 'demo';"
-    )
-    return 0
-
-
-async def _embed(args: argparse.Namespace) -> int:
-    db = service_client()
-    try:
-        total = 0
-        while True:
-            count = await backfill_embeddings(db, limit=min(args.limit - total, 500))
-            total += count
-            print(f"Embedded {total} events…")
-            if count == 0 or total >= args.limit:
-                break
-        print(f"Done. {total} events embedded with provider '{settings.embedding_provider}'.")
-        return 0
-    finally:
-        await db.aclose()
-
-
-async def _expire(_: argparse.Namespace) -> int:
-    db = service_client()
-    try:
-        await expire_past_events(db)
-        print("Past events retired.")
-        return 0
-    finally:
-        await db.aclose()
-
-
-async def _links(args: argparse.Namespace) -> int:
-    from workers.verify_links import report, verify
-
-    checks = await verify(sources=args.source or None, limit=args.limit)
-    return 1 if report(checks) else 0
-
-
-async def _sources(_: argparse.Namespace) -> int:
-    print(f"{'source':<16}{'configured':<13}homepage")
-    print("-" * 62)
-    for slug, source in SOURCES.items():
-        state = "yes" if source.is_configured() else "no (needs key)"
-        print(f"{slug:<16}{state:<13}{source.homepage}")
-    print(f"\nEmbedding provider: {settings.embedding_provider} ({settings.embedding_dim}d)")
-    print(f"Supabase project:   {settings.supabase_url}")
-    print(f"Service role key:   {'set' if settings.has_service_role else 'MISSING'}")
-    return 0
-
-
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="workers.run", description="Qwendo ingestion workers")
-    parser.add_argument("-v", "--verbose", action="store_true", help="debug logging")
-    sub = parser.add_subparsers(dest="command", required=True)
-
-    ingest = sub.add_parser("ingest", help="scrape sources and upsert events")
-    ingest.add_argument("-s", "--source", action="append", help="source slug (repeatable)")
-    ingest.add_argument("-c", "--city", action="append", help="city (repeatable)")
-    ingest.add_argument("-q", "--query", help="keyword filter passed to the source")
-    ingest.add_argument("-n", "--limit", type=int, help="max events per source")
-    ingest.set_defaults(handler=_ingest)
-
-    sub.add_parser("seed", help="insert the demo catalogue").set_defaults(handler=_seed)
-
-    embed = sub.add_parser("embed", help="backfill missing embeddings")
-    embed.add_argument("-n", "--limit", type=int, default=2000)
-    embed.set_defaults(handler=_embed)
-
-    links = sub.add_parser("links", help="audit outbound ticket links")
-    links.add_argument("-s", "--source", action="append", help="source slug (repeatable)")
-    links.add_argument("-n", "--limit", type=int, default=30)
-    links.set_defaults(handler=_links)
-
-    sub.add_parser("expire", help="retire past events").set_defaults(handler=_expire)
-    sub.add_parser("sources", help="show source configuration").set_defaults(handler=_sources)
+def build_parser():
+    parser = argparse.ArgumentParser(prog="workers.run", description=__doc__)
+    parser.add_argument("-v", "--verbose", action="store_true")
+    sub = parser.add_subparsers(dest="command")
+    ingest = sub.add_parser("ingest", help="enqueue refreshes for authorised sources")
+    ingest.add_argument("-c", "--city", action="append")
+    ingest.add_argument("-q", "--query")
+    links = sub.add_parser("links", help="audit stored URL shape and approved hosts offline")
+    for command in (ingest, links):
+        command.add_argument("-s", "--source", action="append", help="source slug (repeatable)")
+        command.add_argument("-n", "--limit", type=positive)
+    sub.add_parser("sources", help="list source registry status")
+    sub.add_parser("expire", help="retire active events that started over 12 hours ago")
+    sub.add_parser("seed", help="explain demo seeding retirement")
+    embed = sub.add_parser("embed", help="explain embedding retirement")
+    embed.add_argument("-n", "--limit", type=int)
     return parser
 
 
-def main() -> int:
-    args = build_parser().parse_args()
-    _configure_logging(args.verbose)
+async def audit_links(db, selected, permitted, remaining):
+    problems = 0
+    for slug in selected:
+        rows = await db.select("events", columns="url,title", filters={
+            "source": f"eq.{slug}", "status": "eq.active"}, order="starts_at,id", limit=remaining)
+        for row in rows:
+            try:
+                checked_url(row["url"], permitted[slug]["allowed_hosts"])
+                result = classify_event_url(slug, row["url"])
+            except ValueError:
+                result = "invalid"
+            print(slug, result, row["title"], sep="\t")
+            problems += int(result != "direct")
+        remaining -= len(rows)
+        if not remaining:
+            break
+    return int(bool(problems))
+
+
+async def operate(args):
+    if args.command is None:
+        return int(await discovery_jobs.main())
+    if args.command == "embed":
+        print("Embedding backfill is retired. Discovery uses the public keyword dictionary.")
+        return 1
+    if args.command == "seed":
+        print("Demo seeding is retired with the legacy ingestion pipeline.")
+        return 1
+    db = service_client()
     try:
-        return asyncio.run(args.handler(args))
+        if args.command == "expire":
+            cutoff = datetime.now(UTC) - timedelta(hours=12)
+            await db.update("events", {"status": "expired"}, returning="minimal",
+                            filters={"status": "eq.active", "starts_at": f"lt.{cutoff.isoformat()}"})
+            print("Past active events retired.")
+            return 0
+        registry = await discovery_jobs.read_all(db, "discovery_sources",
+            "slug,kind,enabled,permission,allowed_hosts", "slug")
+        permitted = {s["slug"]: s for s in registry if s["enabled"] and
+                     (s["permission"] or "").strip() and s["allowed_hosts"]}
+        if args.command == "sources":
+            for source in registry:
+                state = "enabled" if source["slug"] in permitted else "disabled"
+                print(source["slug"], source["kind"], state, sep="\t")
+            return 0
+        selected = list(dict.fromkeys(args.source or permitted))
+        missing = [slug for slug in selected if slug not in permitted]
+        if missing or not selected:
+            print("Unauthorised or unknown sources:" if missing else "No authorised sources.",
+                  *missing, file=sys.stderr)
+            return 1
+        if args.command == "links":
+            return await audit_links(db, selected, permitted, args.limit or 30)
+        for slug in selected:
+            supports_city = permitted[slug]["kind"] in ("ticketmaster", "search")
+            cities = (args.city or settings.default_cities) if supports_city else [None]
+            for city in dict.fromkeys(cities):
+                options = {"city": city, "query": args.query, "limit": args.limit}
+                payload = {k: v for k, v in options.items() if v is not None}
+                # Match the operator API so a retry through either interface shares the job.
+                digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+                job = await discovery_jobs.enqueue(db, slug, "refresh", "manual:" + digest, payload)
+                print(f"Queued {slug} refresh {job}")
+        return 0
+    finally:
+        await db.aclose()
+
+
+def main(argv=None):
+    args = build_parser().parse_args(argv)
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    try:
+        return asyncio.run(operate(args))
     except KeyboardInterrupt:
         return 130
-    except RuntimeError as exc:
-        print(f"Error: {exc}", file=sys.stderr)
+    except (RuntimeError, httpx.HTTPError) as exc:
+        print(f"Worker command failed ({type(exc).__name__}).", file=sys.stderr)
         return 1
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

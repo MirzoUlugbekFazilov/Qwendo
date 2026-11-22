@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from fastapi import APIRouter, Depends, Query
 
 from api.deps import Db, require_ingest_token
 from api.schemas import IngestIn, IngestRunOut, MessageOut
@@ -15,30 +17,28 @@ router = APIRouter(
 )
 
 
-async def _run_ingestion(payload: IngestIn) -> None:
-    # Imported lazily so the API boots even when Playwright isn't installed.
-    from workers.pipeline import run_ingestion
-
-    await run_ingestion(
-        sources=payload.sources,
-        cities=payload.cities or settings.default_cities,
-        query=payload.query,
-        limit_per_source=payload.limit_per_source,
-    )
-
-
 @router.post("/ingest", response_model=MessageOut, status_code=202)
-async def trigger_ingest(payload: IngestIn, background: BackgroundTasks) -> MessageOut:
-    """Kick off a scrape in the background; poll /v1/admin/runs for progress."""
-    background.add_task(_run_ingestion, payload)
-    return MessageOut(
-        ok=True,
-        message="Ingestion started.",
-        data={
-            "sources": payload.sources or ["all configured"],
-            "cities": payload.cities or settings.default_cities,
-        },
-    )
+async def trigger_ingest(payload: IngestIn, db: Db) -> MessageOut:
+    """Schedule discovery for enabled sources using the same queue as the worker."""
+    sources = await db.select("discovery_sources", columns="slug,kind",
+                              filters={"enabled": "eq.true"}, order="slug.asc")
+    jobs = []
+    for source in sources:
+        if payload.sources and source["slug"] not in payload.sources:
+            continue
+        cities = (payload.cities or settings.default_cities) if source["kind"] in ("ticketmaster", "search") else [None]
+        for city in cities:
+            options = {key: value for key, value in {
+                "city": city, "query": payload.query, "limit": payload.limit_per_source
+            }.items() if value is not None}
+            fingerprint = hashlib.sha256(json.dumps(options, sort_keys=True).encode()).hexdigest()
+            job = await db.rpc("discovery_enqueue", {
+                "p_source": source["slug"], "p_kind": "refresh",
+                "p_key": "manual:" + fingerprint, "p_payload": options,
+            })
+            if job:
+                jobs.append(job)
+    return MessageOut(ok=True, message="Discovery queued.", data={"jobs": jobs})
 
 
 @router.get("/runs", response_model=list[IngestRunOut])

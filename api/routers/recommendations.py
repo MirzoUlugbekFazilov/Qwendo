@@ -3,62 +3,88 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
-from typing import Annotated, Any
+from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Query
 
 from api.deps import CurrentUser, Db
+from api.discovery_ranking import miles, norm, rank_events
+from api.routers.discovery import account_db
+from api.catalogue import literal, overlap
+from api.discovery_candidates import HISTORY_COLUMNS, load_candidates, origin_for
+from api.routers.picks import pages
 from api.schemas import EventListOut, EventOut, PreviewIn
-from api.services import (
-    build_taste_vector,
-    categories_for_interests,
-    get_profile,
-    with_reasons,
-)
+from api.services import fetch_interests, get_profile, legacy_preferences, preference_profile
 
 router = APIRouter(tags=["recommendations"])
 
 
-async def _match(
-    db: Db,
-    *,
-    embedding: str | None,
-    user_id: str | None = None,
-    city: str | None = None,
-    lat: float | None = None,
-    lng: float | None = None,
-    radius_km: int | None = None,
-    include_online: bool = True,
-    categories: list[str] | None = None,
-    sources: list[str] | None = None,
-    starts_after: datetime | None = None,
-    starts_before: datetime | None = None,
-    free_only: bool = False,
-    max_price: float | None = None,
-    limit: int = 24,
-    offset: int = 0,
-) -> list[dict[str, Any]]:
-    return await db.rpc(
-        "match_events",
-        {
-            "query_embedding": embedding,
-            "p_user_id": user_id,
-            "p_lat": lat,
-            "p_lng": lng,
-            "p_radius_km": radius_km,
-            "p_city": city,
-            "p_from": starts_after.isoformat() if starts_after else None,
-            "p_to": starts_before.isoformat() if starts_before else None,
-            "p_categories": categories or None,
-            "p_sources": sources or None,
-            "p_include_online": include_online,
-            "p_free_only": free_only,
-            "p_max_price": max_price,
-            "p_limit": limit,
-            "p_offset": offset,
-        },
-    ) or []
+async def _confirmed_profile(db, uid):
+    row = await db.select("user_discovery_profiles", columns="profile",
+                          filters={"user_id": f"eq.{uid}"}, single=True)
+    return row["profile"] if row else None
+
+
+async def _structured_rank(db, uid, profile, *, event_id=None, city=None, categories=None,
+                           sources=None, starts_after=None, starts_before=None, free_only=False,
+                           max_price=None, radius_km=None, candidate_limit=300):
+    now = datetime.now(UTC)
+    filters = {}
+    if starts_after and starts_after.astimezone(UTC) > now:
+        filters["starts_at"] = f"gte.{starts_after.astimezone(UTC).isoformat()}"
+    if categories:
+        filters["categories"] = overlap(categories)
+    if sources:
+        filters["source"] = "in.(" + ",".join(map(literal, sources)) + ")"
+    if max_price is not None:
+        filters["price_min"] = f"lte.{max_price}"
+    if starts_before:
+        filters["and"] = f"(starts_at.lte.{starts_before.isoformat()})"
+    if event_id:
+        filters["id"] = f"eq.{event_id}"
+    if free_only:
+        filters["is_free"] = "eq.true"
+    history, location = await asyncio.gather(
+        pages(db, "saved_events", HISTORY_COLUMNS, {"user_id": f"eq.{uid}"}, "event_id"),
+        db.select("profiles", columns="city,lat,lng", filters={"id": f"eq.{uid}"}, single=True),
+    )
+    effective = dict(profile)
+    if city:
+        effective.update(city=city, flexible_travel=False)
+    origin = origin_for(effective, location)
+    if radius_km is not None:
+        effective.update(radius=radius_km / 1.609344, flexible_travel=False)
+    events = await load_candidates(db, effective, now, origin=origin, filters=filters, limit=candidate_limit)
+
+    def requested(event):
+        if categories and not set(categories).intersection(event.get("categories") or []):
+            return False
+        if sources and event["source"] not in sources:
+            return False
+        if max_price is not None and event.get("price_min") is not None and event["price_min"] > max_price:
+            return False
+        if not event.get("is_online"):
+            if city and norm(city) != norm(event.get("city")):
+                return False
+            distance = miles(origin, event) if radius_km is not None else None
+            if distance is not None and distance > effective["radius"]:
+                return False
+        return True
+
+    return rank_events([e for e in events if requested(e)], effective, history, now, origin)
+
+
+@router.get("/me/relevance/{event_id}")
+async def relevance(user: CurrentUser, event_id: str):
+    db = account_db(user)
+    profile = await _confirmed_profile(db, user["id"])
+    if profile is None:
+        profile = await legacy_preferences(db, user["id"], await get_profile(db, user))
+    items = await _structured_rank(db, user["id"], profile, event_id=event_id)
+    if items:
+        return {key: items[0][key] for key in ("reason", "matched_interest")}
+    return None
 
 
 @router.get("/recommendations", response_model=EventListOut)
@@ -76,95 +102,27 @@ async def recommendations(
     limit: Annotated[int, Query(ge=1, le=100)] = 24,
     offset: Annotated[int, Query(ge=0, le=5000)] = 0,
 ) -> EventListOut:
-    """Ranked feed for the signed-in user, built from their taste vector."""
-    # Profile and interest slugs are independent lookups against a database in
-    # another region — issue them together rather than paying the round trip twice.
-    profile, picked = await asyncio.gather(
-        get_profile(db, user),
-        db.select(
-            "user_interests", columns="interest_slug", filters={"user_id": f"eq.{user['id']}"}
-        ),
+    scoped = account_db(user)
+    profile = await _confirmed_profile(scoped, user["id"])
+    if profile is None:
+        profile = await legacy_preferences(scoped, user["id"], await get_profile(scoped, user))
+    ranked = await _structured_rank(
+        scoped, user["id"], profile, city=city, categories=categories, sources=sources,
+        starts_after=starts_after, starts_before=starts_before, free_only=free_only,
+        max_price=max_price, radius_km=radius_km,
     )
-    embedding = profile.get("embedding")
-
-    # The ranking query and the interest-label lookup are likewise independent.
-    rows, user_categories = await asyncio.gather(
-        _match(
-            db,
-            embedding=embedding,
-            user_id=user["id"],
-            city=city or profile.get("city"),
-            lat=profile.get("lat"),
-            lng=profile.get("lng"),
-            radius_km=radius_km or profile.get("radius_km"),
-            include_online=profile.get("include_online", True),
-            categories=categories,
-            sources=sources,
-            starts_after=starts_after,
-            starts_before=starts_before,
-            free_only=free_only,
-            max_price=max_price,
-            limit=limit,
-            offset=offset,
-        ),
-        categories_for_interests(db, [row["interest_slug"] for row in (picked or [])]),
-    )
-
-    fallback = None if embedding else "no-taste-vector"
-    if not rows and (city or profile.get("city")):
-        # Nothing nearby — widen to anywhere rather than show an empty feed.
-        rows = await _match(
-            db,
-            embedding=embedding,
-            user_id=user["id"],
-            include_online=True,
-            categories=categories,
-            limit=limit,
-            offset=offset,
-        )
-        fallback = fallback or "widened-location"
-
-    return EventListOut(
-        items=[EventOut.model_validate(row) for row in with_reasons(rows, user_categories)],
-        count=len(rows),
-        limit=limit,
-        offset=offset,
-        personalized=bool(embedding),
-        fallback=fallback,
-    )
+    page = [EventOut.model_validate(row) for row in ranked[offset:offset + limit]]
+    return EventListOut(items=page, count=len(page), limit=limit, offset=offset,
+                        personalized=bool(profile.get("interests") or profile.get("categories")))
 
 
 @router.post("/recommendations/preview", response_model=EventListOut)
 async def preview(db: Db, payload: PreviewIn) -> EventListOut:
-    """Instant 'what would Qwendo find for me?' demo — no account required.
-
-    This is the landing-page hook: pick a few interests, see real matched events
-    before signing up.
-    """
-    embedding, _ = await build_taste_vector(
-        db,
-        slugs=payload.interests,
-        interest_text=payload.interest_text,
-        city=payload.city,
-    )
-
-    rows = await _match(
-        db,
-        embedding=embedding,
-        city=payload.city,
-        limit=payload.limit,
-    )
-    if not rows:
-        rows = await db.rpc(
-            "trending_events", {"p_city": payload.city, "p_limit": payload.limit}
-        ) or []
-
-    user_categories = await categories_for_interests(db, payload.interests)
-    return EventListOut(
-        items=[EventOut.model_validate(row) for row in with_reasons(rows, user_categories)],
-        count=len(rows),
-        limit=payload.limit,
-        offset=0,
-        personalized=bool(embedding),
-        fallback=None if embedding else "trending",
-    )
+    taxonomy = await fetch_interests(db, payload.interests)
+    profile = preference_profile(taxonomy, payload.model_dump())
+    now = datetime.now(UTC)
+    rows = await load_candidates(db, profile, now, origin=origin_for(profile, None))
+    ranked = rank_events(rows, profile, [], now)[:payload.limit]
+    items = [EventOut.model_validate(row) for row in ranked]
+    return EventListOut(items=items, count=len(items), limit=payload.limit, offset=0,
+                        personalized=bool(profile["interests"]))

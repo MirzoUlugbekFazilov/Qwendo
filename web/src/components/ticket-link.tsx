@@ -11,6 +11,7 @@ type Props = {
   surface?: string;
   className?: string;
   children?: React.ReactNode;
+  onTracked?: () => void;
 };
 
 /**
@@ -20,10 +21,10 @@ type Props = {
 export function TicketLink({
   eventId,
   url,
-  source,
   surface = "detail",
   className = "",
   children,
+  onTracked,
 }: Props) {
   async function handleClick() {
     try {
@@ -32,7 +33,8 @@ export function TicketLink({
         data: { session },
       } = await supabase.auth.getSession();
       // Fire and forget: tracking must never delay the outbound navigation.
-      void api.trackClick(eventId, surface, session?.access_token);
+      await api.trackClick(eventId, surface, session?.access_token);
+      onTracked?.();
     } catch {
       // analytics is best-effort
     }
@@ -48,7 +50,7 @@ export function TicketLink({
     >
       {children ?? (
         <>
-          Get tickets on {source}
+          View Official Event
           <ExternalLinkIcon className="h-4 w-4" />
         </>
       )}

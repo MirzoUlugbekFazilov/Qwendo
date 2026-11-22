@@ -1,1 +1,1 @@
-"""Ingestion workers: scrape marketplaces, normalize, embed, upsert."""
+"""Scheduled discovery, verification and Radar delivery."""

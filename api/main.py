@@ -12,8 +12,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from api.routers import discovery_admin
 from api.deps import close_clients
-from api.routers import admin, events, me, recommendations
+from api.routers import admin, discovery, events, interest_extraction, me, picks, recommendations
 from core.config import settings
 from core.supabase import SupabaseError
 
@@ -30,7 +31,7 @@ app = FastAPI(
     summary="Event discovery that finds what you care about before the tickets run out.",
     description=(
         "Qwendo aggregates events from Ticketmaster, Eventbrite, Luma and more, "
-        "then ranks them against each user's taste vector using pgvector."
+        "then ranks verified events using explicit interests and practical preferences."
     ),
     lifespan=lifespan,
 )
@@ -42,6 +43,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def private_responses(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/v1/me") or request.headers.get("authorization"):
+        response.headers["Cache-Control"] = "private, no-store"
+    return response
 
 
 @app.exception_handler(SupabaseError)
@@ -56,8 +65,7 @@ async def health() -> dict[str, object]:
     return {
         "status": "ok",
         "service": "qwendo-api",
-        "embedding_provider": settings.embedding_provider,
-        "embedding_dim": settings.embedding_dim,
+        "ranking": "deterministic",
         "service_role_configured": settings.has_service_role,
     }
 
@@ -66,3 +74,8 @@ app.include_router(events.router, prefix="/v1")
 app.include_router(recommendations.router, prefix="/v1")
 app.include_router(me.router, prefix="/v1")
 app.include_router(admin.router, prefix="/v1")
+app.include_router(discovery_admin.router, prefix="/v1")
+app.include_router(discovery_admin.admin, prefix="/v1")
+app.include_router(discovery.router, prefix="/v1")
+app.include_router(interest_extraction.router, prefix="/v1")
+app.include_router(picks.router, prefix="/v1")

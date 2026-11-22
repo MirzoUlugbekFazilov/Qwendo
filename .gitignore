@@ -27,4 +27,5 @@ next-env.d.ts
 
 # local data
 data/
+supabase/.temp/
 *.log

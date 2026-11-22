@@ -97,7 +97,7 @@ def to_iso(value: datetime | None) -> str | None:
 
 
 def content_hash(*parts: object) -> str:
-    """Stable fingerprint used to skip re-embedding unchanged events."""
+    """Stable fingerprint for identifying unchanged event content."""
     joined = "|".join("" if part is None else str(part) for part in parts)
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:40]
 

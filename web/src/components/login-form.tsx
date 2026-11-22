@@ -5,13 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { ArrowRightIcon, GoogleMark } from "@/components/icons";
+import { authDestination } from "@/lib/auth-destination";
 import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
   const params = useSearchParams();
   const router = useRouter();
 
-  const next = params.get("next") || "/discover";
+  const next = authDestination(params.get("next"));
   const [mode, setMode] = useState<"signin" | "signup">(
     params.get("mode") === "signup" ? "signup" : "signin",
   );
@@ -79,9 +80,12 @@ export function LoginForm() {
         }
         router.push("/onboarding");
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
-        router.push(next);
+        const { data: profile, error: readError } = await supabase.from("profiles")
+          .select("onboarded").eq("id", data.user.id).maybeSingle();
+        if (readError) throw readError;
+        router.push(profile?.onboarded ? next : "/onboarding");
       }
       router.refresh();
     } catch (caught) {
@@ -98,7 +102,7 @@ export function LoginForm() {
       </h1>
       <p className="mt-2 text-sm text-mist-400">
         {mode === "signup"
-          ? "One minute to set up. Then we watch every marketplace for you."
+          ? "Set your interests to see matching events."
           : "Sign in to pick up your personalised feed."}
       </p>
 

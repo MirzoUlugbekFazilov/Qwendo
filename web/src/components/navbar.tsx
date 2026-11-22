@@ -33,10 +33,12 @@ export async function Navbar() {
                 <BookmarkIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Saved</span>
               </NavLink>
-              <NavLink href="/onboarding" className="hidden sm:inline-flex">
+              <NavLink href="/picks">
                 <SparklesIcon className="h-4 w-4 text-iris-400" />
-                Interests
+                <span className="sr-only sm:not-sr-only">My picks</span>
               </NavLink>
+
+              {user.app_metadata?.qwendo_admin === true && <NavLink href="/admin/discovery">Admin</NavLink>}
 
               <span
                 className="ml-1 grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-iris-500 to-moss-500 text-sm font-bold text-ink-950 ring-1 ring-ink-700"

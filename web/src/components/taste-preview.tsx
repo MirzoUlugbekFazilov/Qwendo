@@ -53,7 +53,7 @@ export function TastePreview({ interests, city = "London" }: { interests: Intere
         <div className="space-y-1.5">
           <h3 className="font-display text-xl font-semibold text-mist-100">Tell us what you love</h3>
           <p className="text-sm text-mist-400">
-            Pick a few. We&apos;ll match them against everything currently on sale in {city}.
+            Pick a few. We&apos;ll match them against upcoming events in {city}.
           </p>
         </div>
 
@@ -108,7 +108,7 @@ export function TastePreview({ interests, city = "London" }: { interests: Intere
                 Your matches appear here
               </p>
               <p className="mx-auto max-w-sm text-sm text-mist-400">
-                Ranked by a vector search over every event we track — not by who paid for placement.
+                Ranked using your selected interests.
               </p>
             </div>
           </div>
@@ -132,7 +132,7 @@ export function TastePreview({ interests, city = "London" }: { interests: Intere
           <>
             {results.length === 0 ? (
               <div className="surface grid min-h-72 place-items-center rounded-card p-8 text-center text-sm text-mist-400">
-                Nothing in the catalogue matches that yet — run an ingestion to pull in live events.
+                No matching events yet. Try another interest or city.
               </div>
             ) : (
               <div className="grid gap-5 sm:grid-cols-2">
@@ -146,7 +146,7 @@ export function TastePreview({ interests, city = "London" }: { interests: Intere
               href="/login?mode=signup"
               className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-moss-400 transition-colors duration-200 hover:text-moss-300"
             >
-              Create an account to get these weekly, before they sell out
+              Create an account to save your interests
               <ArrowRightIcon className="h-4 w-4" />
             </Link>
           </>

@@ -24,16 +24,22 @@ class Settings(BaseSettings):
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
 
-    # Embeddings
-    embedding_provider: str = "local"
-    embedding_dim: int = 1536
-    openai_api_key: str = ""
-    openai_embedding_model: str = "text-embedding-3-small"
-
     # Scrapers
     ticketmaster_api_key: str = ""
     eventbrite_token: str = ""
     luma_api_key: str = ""
+
+    ranking_weights: dict[str, float] = Field(default_factory=lambda: {
+        "topical": 40, "experience": 25, "location": 15, "timing": 10, "budget": 10,
+    })
+
+    @field_validator("ranking_weights")
+    @classmethod
+    def _valid_weights(cls, weights):
+        expected = {"topical", "experience", "location", "timing", "budget"}
+        if set(weights) != expected or not all(0 <= w <= 100 for w in weights.values()) or not sum(weights.values()):
+            raise ValueError("Supply five nonnegative ranking weights up to 100 with a positive total")
+        return weights
 
     # API
     api_host: str = "0.0.0.0"

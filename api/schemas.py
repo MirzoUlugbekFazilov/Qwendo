@@ -16,6 +16,12 @@ class EventOut(BaseModel):
     id: str
     source: str
     url: str
+    official_url: str | None = None
+    verification_status: str | None = None
+    first_seen_at: datetime | None = None
+    source_published_at: datetime | None = None
+    last_verified_at: datetime | None = None
+    canonical_event_id: str | None = None
     title: str
     summary: str | None = None
     description: str | None = None
@@ -54,7 +60,7 @@ class EventListOut(BaseModel):
     personalized: bool = False
     fallback: str | None = Field(
         default=None,
-        description="Set when results came from a cold-start strategy instead of the taste vector.",
+        description="Set when results came from a cold-start strategy instead of declared preferences.",
     )
 
 

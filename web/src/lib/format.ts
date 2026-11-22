@@ -15,10 +15,13 @@ export const CATEGORY_LABELS: Record<string, string> = {
   nightlife: "Nightlife",
   education: "Learning",
   family: "Family",
+  fashion: "Fashion & Lifestyle",
 };
 
 export const SOURCE_LABELS: Record<string, string> = {
   ticketmaster: "Ticketmaster",
+  "swiss-zurich": "Swiss Data Events",
+  "tickts-london": "Tickts",
   eventbrite: "Eventbrite",
   luma: "Luma",
   demo: "Sample data",
@@ -32,47 +35,45 @@ const CITY_ZONES: Record<string, string> = {
   dubai: "Asia/Dubai", tashkent: "Asia/Tashkent",
 };
 
-export function eventZone(event: QwendoEvent): string {
-  return event.timezone || CITY_ZONES[event.city?.trim().toLowerCase() ?? ""] || "UTC";
+export function eventZone(event: QwendoEvent, timestamp = event.starts_at): string {
+  if (event.timezone) return event.timezone;
+  const offset = timestamp?.match(/([+-]\d{2}:?\d{2})$/)?.[1];
+  if (offset && !/^[+-]00:?00$/.test(offset)) return offset;
+  return CITY_ZONES[event.city?.trim().toLowerCase() ?? ""] || "UTC";
 }
 
-export function formatDate(value: string, timeZone?: string | null): string {
-  const date = new Date(value);
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: timeZone || "UTC",
-  }).format(date);
+function localDate(value: string, zone: string | null | undefined, options: Intl.DateTimeFormatOptions) {
+  // Python datetime.timezone emits UTC+HH:MM. Fixed-offset zone identifiers
+  // are unsupported in some browsers, so format a shifted instant in UTC.
+  const offset = /^(?:UTC|GMT)?([+-])(\d{2}):?(\d{2})$/i.exec(zone ?? "");
+  if (offset && Number(offset[2]) < 24 && Number(offset[3]) < 60) {
+    const minutes = (Number(offset[2]) * 60 + Number(offset[3])) * (offset[1] === "-" ? -1 : 1);
+    return new Intl.DateTimeFormat("en-GB", { ...options, timeZone: "UTC" })
+      .format(Date.parse(value) + minutes * 60000);
+  }
+  return new Intl.DateTimeFormat("en-GB", { ...options, timeZone: zone || "UTC" }).format(new Date(value));
 }
 
-/** "19:30" — the single most-asked question about an event after the date. */
-export function formatTime(value: string, timeZone?: string | null): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: timeZone || "UTC",
-  }).format(new Date(value));
+export function formatDate(value: string, zone?: string | null): string {
+  return localDate(value, zone, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+export function formatTime(value: string, zone?: string | null): string {
+  return localDate(value, zone, { hour: "2-digit", minute: "2-digit" });
 }
 
 export function formatDayBadge(value: string, zone?: string | null): { day: string; month: string } {
-  const date = new Date(value);
-  return {
-    day: new Intl.DateTimeFormat("en-GB", { day: "numeric", timeZone: zone || "UTC" }).format(date),
-    month: new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: zone || "UTC" }).format(date).toUpperCase(),
-  };
+  return { day: localDate(value, zone, { day: "numeric" }), month: localDate(value, zone, { month: "short" }).toUpperCase() };
 }
 
 export function calendarLabel(value: string, zone?: string | null): string {
-  return new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: zone || "UTC" }).format(new Date(value));
+  return localDate(value, zone, { weekday: "short", day: "numeric", month: "short" });
 }
 
 export function formatPrice(event: Pick<QwendoEvent, "price_min" | "currency" | "is_free">): string {
-  if (event.is_free || event.price_min === 0) return "Free";
-  if (event.price_min == null) return "See tickets";
-  const currency = event.currency || "GBP";
+  if (event.is_free) return "Free";
+  if (event.price_min == null || !event.currency) return "Price unlisted";
+  const currency = event.currency;
   try {
     const formatted = new Intl.NumberFormat("en-GB", {
       style: "currency",

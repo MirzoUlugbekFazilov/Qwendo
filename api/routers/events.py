@@ -3,27 +3,20 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from api.listing_details import enrich_listing
-from api.deps import Db, OptionalUser
+from api.catalogue import LIST_COLUMNS, literal, overlap, public_filters, public_items
+from api.deps import OptionalUser, get_anon_db
 from api.schemas import ClickIn, EventListOut, EventOut, InterestOut, MessageOut, StatsOut
 from api.services import fetch_interests
 
+from core.supabase import SupabaseClient
+
+Db = Annotated[SupabaseClient, Depends(get_anon_db)]
 router = APIRouter(tags=["events"])
-
-LIST_COLUMNS = (
-    "id,source,url,title,summary,description,image_url,starts_at,ends_at,timezone,is_online,"
-    "venue_name,address,city,country,lat,lng,price_min,price_max,currency,is_free,organizer,"
-    "categories,tags,popularity"
-)
-
-
-def _quote_list(values: list[str]) -> str:
-    return "{" + ",".join(f'"{value}"' for value in values) + "}"
 
 
 @router.get("/stats", response_model=StatsOut)
@@ -57,48 +50,28 @@ async def list_events(
     if q:
         # Generic listing words add a mandatory term to Postgres full-text search.
         q = re.sub(r"\bevents?\b", " ", q, flags=re.IGNORECASE).strip() or q
-    if q and not (free_only or sources or not include_online):
-        rows = await db.rpc(
-            "search_events",
-            {
-                "p_query": q,
-                "p_city": city,
-                "p_from": starts_after.isoformat() if starts_after else None,
-                "p_to": starts_before.isoformat() if starts_before else None,
-                "p_categories": categories or None,
-                "p_limit": limit,
-                "p_offset": offset,
-            },
-        )
-        items = rows or []
-    else:
-        filters: dict[str, str] = {"status": "neq.expired"}
-        filters["starts_at"] = f"gte.{(starts_after or datetime.now().astimezone()).isoformat()}"
-        if q:
-            filters["search_tsv"] = f"wfts(english).{q}"
-        if starts_before:
-            filters["and"] = f"(starts_at.lte.{starts_before.isoformat()})"
-        if categories:
-            filters["categories"] = f"ov.{_quote_list(categories)}"
-        if sources:
-            filters["source"] = f"in.({','.join(sources)})"
-        if free_only:
-            filters["is_free"] = "eq.true"
-        if city:
-            filters["or"] = (
-                f"(city.ilike.{city},is_online.eq.true)" if include_online else f"(city.ilike.{city})"
-            )
-        elif not include_online:
-            filters["is_online"] = "eq.false"
-
-        items = await db.select(
-            "events",
-            columns=LIST_COLUMNS,
-            filters=filters,
-            order="starts_at.asc",
-            limit=limit,
-            offset=offset,
-        ) or []
+    now = datetime.now(UTC)
+    filters = public_filters(now)
+    if starts_after and starts_after.astimezone(UTC) > now:
+        filters["starts_at"] = f"gte.{starts_after.astimezone(UTC).isoformat()}"
+    if starts_before:
+        filters["and"] = f"(starts_at.lte.{starts_before.astimezone(UTC).isoformat()})"
+    if q:
+        filters["search_tsv"] = f"wfts(english).{q}"
+    if categories:
+        filters["categories"] = overlap(categories)
+    if sources:
+        filters["source"] = "in.(" + ",".join(map(literal, sources)) + ")"
+    if free_only:
+        filters["is_free"] = "eq.true"
+    if not include_online:
+        filters["is_online"] = "eq.false"
+    if city:
+        filters["or"] = (f"(city.ilike.{literal(city)},is_online.eq.true)" if include_online
+                         else f"(city.ilike.{literal(city)})")
+    rows = await db.select("events", columns=LIST_COLUMNS, filters=filters,
+                           order="starts_at.asc,id.asc", limit=limit, offset=offset)
+    items = public_items(rows, now)
 
     return EventListOut(
         items=[EventOut.model_validate(item) for item in items],
@@ -108,18 +81,26 @@ async def list_events(
     )
 
 
+async def featured(db, rpc, city, limit):
+    rows = await db.rpc(rpc, {"p_city": city, "p_limit": limit}) or []
+    if rows and "verification_status" not in rows[0]:
+        # Older featured functions return a projected record. Recheck the selected IDs.
+        ids = [str(row["id"]) for row in rows]
+        filters = {**public_filters(), "id": "in.(" + ",".join(map(literal, ids)) + ")"}
+        records = await db.select("events", columns=LIST_COLUMNS, filters=filters, limit=limit)
+        by_id = {row["id"]: row for row in records}
+        rows = [by_id[key] for key in ids if key in by_id]
+    return public_items(rows)
+
+
 @router.get("/events/hero", response_model=EventListOut)
 async def hero(
     db: Db,
     city: Annotated[str | None, Query(max_length=120)] = None,
     limit: Annotated[int, Query(ge=1, le=40)] = 12,
 ) -> EventListOut:
-    """Events shown in the landing-page hero.
-
-    Only events with artwork that a human hasn't vetoed. Hide one with:
-        update events set hero_eligible = false where id = '…';
-    """
-    rows = await db.rpc("hero_events", {"p_city": city, "p_limit": limit}) or []
+    """Verified upcoming events selected for the landing-page artwork."""
+    rows = await featured(db, "hero_events", city, limit)
     return EventListOut(
         items=[EventOut.model_validate(row) for row in rows],
         count=len(rows),
@@ -136,7 +117,7 @@ async def trending(
     limit: Annotated[int, Query(ge=1, le=50)] = 12,
 ) -> EventListOut:
     """Cold-start feed: what everyone else is clicking on."""
-    rows = await db.rpc("trending_events", {"p_city": city, "p_limit": limit}) or []
+    rows = await featured(db, "trending_events", city, limit)
     return EventListOut(
         items=[EventOut.model_validate(row) for row in rows],
         count=len(rows),
@@ -149,20 +130,23 @@ async def trending(
 @router.get("/events/{event_id}", response_model=EventOut)
 async def get_event(db: Db, event_id: str) -> dict[str, Any]:
     event = await db.select(
-        "events", columns=LIST_COLUMNS, filters={"id": f"eq.{event_id}"}, single=True
+        "events", columns=LIST_COLUMNS, filters={**public_filters(), "id": f"eq.{event_id}"}, single=True
     )
-    if not event:
+    items = public_items([event] if event else [])
+    if not items:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
-    return await enrich_listing(event)
+    return items[0]
 
 
 @router.post(
     "/events/{event_id}/click", response_model=MessageOut, status_code=status.HTTP_202_ACCEPTED
 )
 async def track_click(
-    db: Db, event_id: str, payload: ClickIn, user: OptionalUser
+    event_id: str, payload: ClickIn, user: OptionalUser
 ) -> MessageOut:
     """Logged when a user heads off to the official ticket page."""
+    db = get_anon_db().as_user(user["access_token"] if user else None)
+    await get_event(db, event_id)
     await db.insert(
         "event_clicks",
         {
